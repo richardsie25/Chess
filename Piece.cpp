@@ -31,7 +31,7 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
 
         bool flag = true;
 
-        if (isValidMove(destCol, destRow) && isValidPos(releasePos.x(), releasePos.y())) {
+        if (isValidMove(destCol, destRow) && isValidPos(releasePos.x(), releasePos.y()) && !isKinginCheck(destCol,destRow)) {
 
             if (isOccupied(destCol, destRow)) {
                 if (isEnemy(destCol, destRow))
@@ -43,6 +43,9 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
             }
 
             if (flag) {
+                //Highlight squares
+                highlightSquares(destCol, destRow);
+
                 //Change PieceMap of each square
                 int currentCol = lastPosition.x() / squareSize;
                 int currentRow = lastPosition.y() / squareSize;
@@ -52,9 +55,6 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
                 //Change Position of piece
                 setPos(destCol * squareSize, destRow * squareSize);
                 lastPosition = QPointF(destCol * squareSize, destRow * squareSize);
-
-                //Highlight squares
-                highlightSquares(currentCol, currentRow, destCol, destRow);
             }
         }
         else {
@@ -95,34 +95,60 @@ void Piece::captures(int destCol, int destRow) {
 
 }
 
-void Piece::highlightSquares(int currentCol, int currentRow, int destCol, int destRow) {
+void Piece::highlightSquares(int destCol, int destRow) {
     scene->removeItem(currentHighlight);
     scene->removeItem(destHighlight);
-    currentHighlight = scene->addRect(currentCol * squareSize, currentRow * squareSize, squareSize, squareSize,
+    currentHighlight = scene->addRect(lastPosition.x(), lastPosition.y(), squareSize, squareSize,
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
     destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
 }
 
-bool Piece::isKinginCheck() {
+QPointF Piece::getKingLocation() {
     for (int col = 0; col < boardSize; col++) {
         for (int row = 0; row < boardSize; row++) {
             Piece* piece = pieceMap[col][row];
             if (piece && piece->color == color && dynamic_cast<King*>(piece)) {
-                int kingCol = col;
-                int kingRow = row;
+                return QPointF(col * squareSize, row * squareSize);
+            }
+        }
+    }
+    return QPointF();
+}
+
+bool Piece::isKinginCheck(int destCol, int destRow) {
+    int currentCol = lastPosition.x() / squareSize;
+    int currentRow = lastPosition.y() / squareSize;
+
+    Piece* originalDestPiece = pieceMap[destCol][destRow];
+    pieceMap[destCol][destRow] = this;
+    pieceMap[currentCol][currentRow] = nullptr;
+    setPos(destCol * squareSize, destRow * squareSize);
+
+    QPointF kingLoc = getKingLocation();
+    for (int col = 0; col < boardSize; col++) {
+        for (int row = 0; row < boardSize; row++) {
+            Piece* piece = pieceMap[col][row];
+            if (piece && piece->color == color && dynamic_cast<King*>(piece)) {
+                int kingCol = kingLoc.x() / squareSize;
+                int kingRow = kingLoc.y() / squareSize;
 
                 for (int i = 0; i < boardSize; i++) {
                     for (int j = 0; j < boardSize; j++) {
                         Piece* opponentPiece = pieceMap[i][j];
                         if (opponentPiece && opponentPiece->color != color) {
                             if (opponentPiece->isValidMove(kingCol, kingRow)) {
+                                pieceMap[currentCol][currentRow] = this;
+                                pieceMap[destCol][destRow] = originalDestPiece;
+                                setPos(lastPosition);
                                 return true;
                             }
                         }
                     }
                 }
-
+                pieceMap[currentCol][currentRow] = this;
+                pieceMap[destCol][destRow] = originalDestPiece;
+                setPos(lastPosition);
                 return false;
             }
         }

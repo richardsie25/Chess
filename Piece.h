@@ -13,8 +13,9 @@ public:
     bool isEnemy(int destCol, int destRow);
     bool isValidPos(int destCol, int destRow);
     void captures(int destCol, int destRow);
-    void highlightSquares(int currentCol, int currentRow, int destCol, int destRow);
-    bool isKinginCheck();
+    void highlightSquares(int destCol, int destRow);
+    QPointF getKingLocation();
+    bool isKinginCheck(int destCol, int destRow);
     void resetPieceMap();
     virtual bool isValidMove(int destCol, int destRow);
     virtual QString imagePath(QString color);

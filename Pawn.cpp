@@ -1,5 +1,6 @@
 #include "Pawn.h"
 #include "Queen.h"
+#include <QTimer>
 
 Pawn::Pawn(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePath(color)).scaled(squareSize, squareSize), parent) {
 
@@ -16,18 +17,6 @@ bool Pawn::isValidMove(int destCol, int destRow) {
     int currentCol = lastPosition.x() / squareSize;
     int currentRow = lastPosition.y() / squareSize;
     bool validMove = false;
-
-    //Valid move for checks
-    Piece* originalDestPiece = pieceMap[destCol][destRow];
-    pieceMap[destCol][destRow] = this;
-    pieceMap[currentCol][currentRow] = nullptr;
-    setPos(destCol * squareSize, destRow * squareSize);
-    bool kingInCheck = isKinginCheck();
-    pieceMap[currentCol][currentRow] = this;
-    pieceMap[destCol][destRow] = originalDestPiece;
-    setPos(lastPosition);
-    if (kingInCheck)
-        return false;
 
     if (color == "white") {
         //Captures
@@ -52,12 +41,14 @@ bool Pawn::isValidMove(int destCol, int destRow) {
 
         //Promotion
         if (destRow == 0 && validMove) {
-            scene->removeItem(this);
             pieceMap[currentCol][currentRow] = nullptr;
             captures(destCol, destRow);
             Queen* promotedQueen = new Queen(color);
             promotedQueen->setOriginalPosition(QPointF(destCol * squareSize, destRow * squareSize));
             scene->addItem(promotedQueen);
+            QTimer::singleShot(0, [this]() {
+                scene->removeItem(this);
+            });
         }
 
         return validMove;
@@ -93,6 +84,9 @@ bool Pawn::isValidMove(int destCol, int destRow) {
             Queen* promotedQueen = new Queen(color);
             promotedQueen->setOriginalPosition(QPointF(destCol * squareSize, destRow * squareSize));
             scene->addItem(promotedQueen);
+            QTimer::singleShot(0, [this]() {
+                scene->removeItem(this);
+            });
         }
 
         return validMove;
