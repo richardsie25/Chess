@@ -9,7 +9,21 @@ int main(int argc, char* argv[]) {
     Game game;
     game.show();
 
-    QTimer timer;
+
+    return app.exec();
+}
+
+/* Things to Implement
+* Check for checks (forcing king to move)
+* Pinning of pieces
+* Checkmate/Stalemate
+* Pawn Promotion
+* King and Queen side castling
+* Changing turns
+* Display dead piece/ count material
+* En passant
+* 
+* QTimer timer;
     QObject::connect(&timer, &QTimer::timeout, [&]() {
         QFile file("fen.txt");
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -25,18 +39,5 @@ int main(int argc, char* argv[]) {
         });
 
     // Start the timer for the first time, update every 5 seconds
-    timer.start(2000);
-
-    return app.exec();
-}
-
-/* Things to Implement
-* Check for checks (forcing king to move)
-* Pinning of pieces
-* Checkmate/Stalemate
-* Pawn Promotion
-* King and Queen side castling
-* Changing turns
-* Display dead piece/ count material
-* En passant
+    timer.start(1000);
 */

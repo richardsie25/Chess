@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Board.h"
+
 Board* board;
 Game::Game(QWidget *parent) : QGraphicsView(parent) {
     setFixedSize(1400, 802);
@@ -13,6 +14,7 @@ Game::Game(QWidget *parent) : QGraphicsView(parent) {
 
     board = new Board(scene);
     board->drawBoard();
+    board->resetDefaultBoard();
 }
 
 Game::~Game() {

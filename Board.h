@@ -1,5 +1,4 @@
 #include <QGraphicsScene>
-#include "Piece.h"
 
 class Board 
 {

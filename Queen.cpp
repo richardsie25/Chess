@@ -14,6 +14,19 @@ bool Queen::isValidMove(int destCol, int destRow) {
     int currentCol = lastPosition.x() / squareSize;
     int currentRow = lastPosition.y() / squareSize;
 
+    //Valid move for checks
+    Piece* originalDestPiece = pieceMap[destCol][destRow];
+    pieceMap[destCol][destRow] = this;
+    pieceMap[currentCol][currentRow] = nullptr;
+    setPos(destCol * squareSize, destRow * squareSize);
+    bool kingInCheck = isKinginCheck();
+    pieceMap[currentCol][currentRow] = this;
+    pieceMap[destCol][destRow] = originalDestPiece;
+    setPos(lastPosition);
+    if (kingInCheck)
+        return false;
+
+    //Horizonal Movement Collision Check
     if (destCol != currentCol && destRow == currentRow) {
         int startCol = std::min(currentCol, destCol);
         int endCol = std::max(currentCol, destCol) + 1;
@@ -25,6 +38,7 @@ bool Queen::isValidMove(int destCol, int destRow) {
         return true;
     }
 
+    //Vertical Movement Collision Check
     if (destCol == currentCol && destRow != currentRow) {
         int startRow = std::min(currentRow, destRow);
         int endRow = std::max(currentRow, destRow) + 1;
@@ -36,6 +50,7 @@ bool Queen::isValidMove(int destCol, int destRow) {
         return true;
     }
     
+    //Diagonal Movement Collision Check
     if (qAbs(destCol - currentCol) == qAbs(destRow - currentRow)) {
         int colStep = (destCol > currentCol) ? 1 : -1;
         int rowStep = (destRow > currentRow) ? 1 : -1;

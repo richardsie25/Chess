@@ -1,4 +1,5 @@
 #include "Piece.h"
+#include "King.h"
 
 Piece* Piece::pieceMap[boardSize][boardSize];
 QGraphicsScene* Piece::scene;
@@ -42,7 +43,7 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
             }
 
             if (flag) {
-                //Change color state of each square
+                //Change PieceMap of each square
                 int currentCol = lastPosition.x() / squareSize;
                 int currentRow = lastPosition.y() / squareSize;
                 pieceMap[destCol][destRow] = this;
@@ -101,6 +102,32 @@ void Piece::highlightSquares(int currentCol, int currentRow, int destCol, int de
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
     destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
+}
+
+bool Piece::isKinginCheck() {
+    for (int col = 0; col < boardSize; col++) {
+        for (int row = 0; row < boardSize; row++) {
+            Piece* piece = pieceMap[col][row];
+            if (piece && piece->color == color && dynamic_cast<King*>(piece)) {
+                int kingCol = col;
+                int kingRow = row;
+
+                for (int i = 0; i < boardSize; i++) {
+                    for (int j = 0; j < boardSize; j++) {
+                        Piece* opponentPiece = pieceMap[i][j];
+                        if (opponentPiece && opponentPiece->color != color) {
+                            if (opponentPiece->isValidMove(kingCol, kingRow)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+        }
+    }
+    return false;
 }
 
 void Piece::resetPieceMap() {

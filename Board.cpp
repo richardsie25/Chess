@@ -1,5 +1,4 @@
 #include "Board.h"
-#include "Game.h"
 #include "Piece.h"
 #include "Pawn.h"
 #include "Bishop.h"
@@ -24,8 +23,6 @@ void Board::drawBoard() {
             QColor squareColor = ((row + col) % 2 == 0) ? QColor(238, 238, 210, 255) : QColor(118, 150, 86, 255);
             scene->addRect(col * squareSize, row * squareSize, squareSize, squareSize,
                 QPen(Qt::transparent), QBrush(squareColor));
-
-          
 
             if (col == 0) {
                 //Font Text
@@ -225,5 +222,6 @@ void Board::clearBoard() {
     }
     
 }
+
 
 
