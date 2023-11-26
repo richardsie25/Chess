@@ -1,6 +1,6 @@
 #include "Rook.h"
 Rook::Rook(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePath(color)).scaled(squareSize, squareSize), parent) {
-
+    hasMoved = false;
 }
 
 QString Rook::imagePath(QString color) {
@@ -23,6 +23,7 @@ bool Rook::isValidMove(int destCol, int destRow) {
                 return false;
             }
         }
+        hasMoved = true;
         return true; 
     }
 
@@ -35,6 +36,7 @@ bool Rook::isValidMove(int destCol, int destRow) {
                 return false;
             }
         }
+        hasMoved = true;
         return true;
     }
     return false;

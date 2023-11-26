@@ -14,11 +14,8 @@ int main(int argc, char* argv[]) {
 }
 
 /* Things to Implement
-* Check for checks (forcing king to move)
-* Pinning of pieces
 * Checkmate/Stalemate
-* Pawn Promotion
-* King and Queen side castling
+* Pawn Promotion choose pieces
 * Changing turns
 * Display dead piece/ count material
 * En passant

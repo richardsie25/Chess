@@ -12,10 +12,11 @@ public:
     bool isOccupied(int destCol, int destRow);
     bool isEnemy(int destCol, int destRow);
     bool isValidPos(int destCol, int destRow);
+    bool isKinginCheck(int destCol, int destRow);
+    bool isStalemate();
+    bool isCheckmate();
     void captures(int destCol, int destRow);
     void highlightSquares(int destCol, int destRow);
-    QPointF getKingLocation();
-    bool isKinginCheck(int destCol, int destRow);
     void resetPieceMap();
     virtual bool isValidMove(int destCol, int destRow);
     virtual QString imagePath(QString color);

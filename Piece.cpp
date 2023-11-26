@@ -85,53 +85,21 @@ bool Piece::isValidPos(int destCol, int destRow) {
     return destCol >= 0 && destCol < boardSize * squareSize && destRow >= 0 && destRow < boardSize * squareSize;
 }
 
-void Piece::captures(int destCol, int destRow) {
-    for (QGraphicsItem* item : scene->items()) {
-        if (dynamic_cast<Piece*>(item) && item->scenePos() == QPointF(destCol * squareSize, destRow * squareSize)) {
-            scene->removeItem(item);
-            delete item;
-        }
-    }
-
-}
-
-void Piece::highlightSquares(int destCol, int destRow) {
-    scene->removeItem(currentHighlight);
-    scene->removeItem(destHighlight);
-    currentHighlight = scene->addRect(lastPosition.x(), lastPosition.y(), squareSize, squareSize,
-        QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
-    destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
-        QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
-}
-
-QPointF Piece::getKingLocation() {
-    for (int col = 0; col < boardSize; col++) {
-        for (int row = 0; row < boardSize; row++) {
-            Piece* piece = pieceMap[col][row];
-            if (piece && piece->color == color && dynamic_cast<King*>(piece)) {
-                return QPointF(col * squareSize, row * squareSize);
-            }
-        }
-    }
-    return QPointF();
-}
-
 bool Piece::isKinginCheck(int destCol, int destRow) {
     int currentCol = lastPosition.x() / squareSize;
     int currentRow = lastPosition.y() / squareSize;
 
     Piece* originalDestPiece = pieceMap[destCol][destRow];
-    pieceMap[destCol][destRow] = this;
     pieceMap[currentCol][currentRow] = nullptr;
+    pieceMap[destCol][destRow] = this;
     setPos(destCol * squareSize, destRow * squareSize);
 
-    QPointF kingLoc = getKingLocation();
     for (int col = 0; col < boardSize; col++) {
         for (int row = 0; row < boardSize; row++) {
             Piece* piece = pieceMap[col][row];
             if (piece && piece->color == color && dynamic_cast<King*>(piece)) {
-                int kingCol = kingLoc.x() / squareSize;
-                int kingRow = kingLoc.y() / squareSize;
+                int kingCol = col;
+                int kingRow = row;
 
                 for (int i = 0; i < boardSize; i++) {
                     for (int j = 0; j < boardSize; j++) {
@@ -154,6 +122,25 @@ bool Piece::isKinginCheck(int destCol, int destRow) {
         }
     }
     return false;
+}
+
+void Piece::captures(int destCol, int destRow) {
+    for (QGraphicsItem* item : scene->items()) {
+        if (dynamic_cast<Piece*>(item) && item->scenePos() == QPointF(destCol * squareSize, destRow * squareSize)) {
+            scene->removeItem(item);
+            delete item;
+        }
+    }
+
+}
+
+void Piece::highlightSquares(int destCol, int destRow) {
+    scene->removeItem(currentHighlight);
+    scene->removeItem(destHighlight);
+    currentHighlight = scene->addRect(lastPosition.x(), lastPosition.y(), squareSize, squareSize,
+        QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
+    destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
+        QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
 }
 
 void Piece::resetPieceMap() {
