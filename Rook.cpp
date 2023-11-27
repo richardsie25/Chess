@@ -23,7 +23,6 @@ bool Rook::isValidMove(int destCol, int destRow) {
                 return false;
             }
         }
-        hasMoved = true;
         return true; 
     }
 
@@ -36,7 +35,6 @@ bool Rook::isValidMove(int destCol, int destRow) {
                 return false;
             }
         }
-        hasMoved = true;
         return true;
     }
     return false;

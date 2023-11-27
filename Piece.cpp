@@ -1,5 +1,7 @@
 #include "Piece.h"
 #include "King.h"
+#include "Rook.h"
+#include <QDebug>
 
 Piece* Piece::pieceMap[boardSize][boardSize];
 QGraphicsScene* Piece::scene;
@@ -31,7 +33,7 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
 
         bool flag = true;
 
-        if (isValidMove(destCol, destRow) && isValidPos(releasePos.x(), releasePos.y()) && !isKinginCheck(destCol,destRow)) {
+        if (isValidMove(destCol, destRow) && isValidPos(releasePos.x(), releasePos.y()) && !isKinginCheck(destCol,destRow, color)) {
 
             if (isOccupied(destCol, destRow)) {
                 if (isEnemy(destCol, destRow))
@@ -43,6 +45,12 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
             }
 
             if (flag) {
+                if (dynamic_cast<King*>(this)) {
+                    dynamic_cast<King*>(this)->hasMoved = true;
+                }
+                if (dynamic_cast<Rook*>(this)) {
+                    dynamic_cast<Rook*>(this)->hasMoved = true;
+                }
                 //Highlight squares
                 highlightSquares(destCol, destRow);
 
@@ -85,7 +93,23 @@ bool Piece::isValidPos(int destCol, int destRow) {
     return destCol >= 0 && destCol < boardSize * squareSize && destRow >= 0 && destRow < boardSize * squareSize;
 }
 
-bool Piece::isKinginCheck(int destCol, int destRow) {
+QPointF Piece::getKingLocation(QString kingColor){
+    int kingCol = -1;
+    int kingRow = -1;
+    for (int col = 0; col < boardSize; col++) {
+        for (int row = 0; row < boardSize; row++) {
+            Piece* piece = pieceMap[col][row];
+            if (piece && piece->color == kingColor && dynamic_cast<King*>(piece)) {
+                kingCol = col;
+                kingRow = row;
+                break;
+            }
+        }
+    }
+    return QPointF(kingCol * squareSize, kingRow * squareSize);
+}
+
+bool Piece::isKinginCheck(int destCol, int destRow, QString kingColor) {
     int currentCol = lastPosition.x() / squareSize;
     int currentRow = lastPosition.y() / squareSize;
 
@@ -94,33 +118,96 @@ bool Piece::isKinginCheck(int destCol, int destRow) {
     pieceMap[destCol][destRow] = this;
     setPos(destCol * squareSize, destRow * squareSize);
 
-    for (int col = 0; col < boardSize; col++) {
-        for (int row = 0; row < boardSize; row++) {
-            Piece* piece = pieceMap[col][row];
-            if (piece && piece->color == color && dynamic_cast<King*>(piece)) {
-                int kingCol = col;
-                int kingRow = row;
+    QPointF kingLoc = getKingLocation(kingColor);
+    int kingCol = kingLoc.x() / squareSize;
+    int kingRow = kingLoc.y() / squareSize;
 
-                for (int i = 0; i < boardSize; i++) {
-                    for (int j = 0; j < boardSize; j++) {
-                        Piece* opponentPiece = pieceMap[i][j];
-                        if (opponentPiece && opponentPiece->color != color) {
-                            if (opponentPiece->isValidMove(kingCol, kingRow)) {
-                                pieceMap[currentCol][currentRow] = this;
-                                pieceMap[destCol][destRow] = originalDestPiece;
-                                setPos(lastPosition);
-                                return true;
-                            }
-                        }
-                    }
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* opponentPiece = pieceMap[i][j];
+            if (opponentPiece && opponentPiece->color != kingColor) {
+                if (opponentPiece->isValidMove(kingCol, kingRow)) {
+                    pieceMap[currentCol][currentRow] = this;
+                    pieceMap[destCol][destRow] = originalDestPiece;
+                    setPos(lastPosition);
+                    return true;
                 }
-                pieceMap[currentCol][currentRow] = this;
-                pieceMap[destCol][destRow] = originalDestPiece;
-                setPos(lastPosition);
-                return false;
             }
         }
     }
+
+    pieceMap[currentCol][currentRow] = this;
+    pieceMap[destCol][destRow] = originalDestPiece;
+    setPos(lastPosition);
+    return false;
+}
+
+bool Piece::isStalemate(QString kingColor) {
+    QPointF kingLoc = getKingLocation(kingColor);
+    int kingCol = kingLoc.x() / squareSize;
+    int kingRow = kingLoc.y() / squareSize;
+
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* opponentPiece = pieceMap[i][j];
+            if (opponentPiece && opponentPiece->color != kingColor) {
+                if (opponentPiece->isValidMove(kingCol, kingRow)) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* teamPiece = pieceMap[i][j];
+            if (teamPiece && teamPiece->color == kingColor) {
+                for (int k = 0; k < boardSize; k++) {
+                    for (int l = 0; l < boardSize; l++) {
+                        if (teamPiece->isValidMove(k, l) && (pieceMap[k][l] == nullptr || pieceMap[k][l]->color != kingColor)) {
+                            if (!teamPiece->isKinginCheck(k, l, kingColor))
+                                return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool Piece::isCheckmate(QString kingColor) {
+    QPointF kingLoc = getKingLocation(kingColor);
+    int kingCol = kingLoc.x() / squareSize;
+    int kingRow = kingLoc.y() / squareSize;
+
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* teamPiece = pieceMap[i][j];
+            if (teamPiece && teamPiece->color == kingColor) {
+                for (int k = 0; k < boardSize; k++) {
+                    for (int l = 0; l < boardSize; l++) {
+                        if (teamPiece->isValidMove(k, l) && (pieceMap[k][l] == nullptr || pieceMap[k][l]->color != kingColor)) {
+                            if (!teamPiece->isKinginCheck(k, l, kingColor))
+                                return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* opponentPiece = pieceMap[i][j];
+            if (opponentPiece && opponentPiece->color != kingColor) {
+                if (opponentPiece->isValidMove(kingCol, kingRow)) {
+                    return true;
+                }
+            }
+        }
+    }
+
     return false;
 }
 
