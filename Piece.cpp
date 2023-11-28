@@ -1,12 +1,13 @@
 #include "Piece.h"
 #include "King.h"
-#include "Rook.h"
+#include "Rook.h"   
 #include <QDebug>
 
 Piece* Piece::pieceMap[boardSize][boardSize];
 QGraphicsScene* Piece::scene;
 QGraphicsRectItem* Piece::currentHighlight = nullptr;
 QGraphicsRectItem* Piece::destHighlight = nullptr;
+QString Piece::playerTurn = "white";
 
 Piece::Piece(QString color, const QPixmap& pixmap, QGraphicsItem* parent): QGraphicsPixmapItem(pixmap, parent) {
     this->color = color;
@@ -30,10 +31,9 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
         QPointF releasePos = event->scenePos();
         int destCol = releasePos.x() / squareSize;
         int destRow = releasePos.y() / squareSize;
-
         bool flag = true;
 
-        if (isValidMove(destCol, destRow) && isValidPos(releasePos.x(), releasePos.y()) && !isKinginCheck(destCol,destRow, color)) {
+        if (color == playerTurn && !isKinginCheck(destCol, destRow, color) && isValidMove(destCol, destRow) && isValidPos(releasePos.x(), releasePos.y())) {
 
             if (isOccupied(destCol, destRow)) {
                 if (isEnemy(destCol, destRow))
@@ -45,12 +45,12 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
             }
 
             if (flag) {
-                if (dynamic_cast<King*>(this)) {
+                //Flag for castling
+                if (dynamic_cast<King*>(this))
                     dynamic_cast<King*>(this)->hasMoved = true;
-                }
-                if (dynamic_cast<Rook*>(this)) {
+                if (dynamic_cast<Rook*>(this))
                     dynamic_cast<Rook*>(this)->hasMoved = true;
-                }
+
                 //Highlight squares
                 highlightSquares(destCol, destRow);
 
@@ -63,6 +63,14 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
                 //Change Position of piece
                 setPos(destCol * squareSize, destRow * squareSize);
                 lastPosition = QPointF(destCol * squareSize, destRow * squareSize);
+
+                //Switch Player Turn for valid moves
+                if (playerTurn == "white") {
+                    playerTurn = "black";
+                }
+                else {
+                    playerTurn = "white";
+                }
             }
         }
         else {
@@ -113,20 +121,24 @@ bool Piece::isKinginCheck(int destCol, int destRow, QString kingColor) {
     int currentCol = lastPosition.x() / squareSize;
     int currentRow = lastPosition.y() / squareSize;
 
+    //Move piece temporarily
     Piece* originalDestPiece = pieceMap[destCol][destRow];
     pieceMap[currentCol][currentRow] = nullptr;
     pieceMap[destCol][destRow] = this;
     setPos(destCol * squareSize, destRow * squareSize);
 
+    //Get king location
     QPointF kingLoc = getKingLocation(kingColor);
     int kingCol = kingLoc.x() / squareSize;
     int kingRow = kingLoc.y() / squareSize;
 
+    //Check if king is checked
     for (int i = 0; i < boardSize; i++) {
         for (int j = 0; j < boardSize; j++) {
             Piece* opponentPiece = pieceMap[i][j];
             if (opponentPiece && opponentPiece->color != kingColor) {
                 if (opponentPiece->isValidMove(kingCol, kingRow)) {
+                    //Revert pieces to original location
                     pieceMap[currentCol][currentRow] = this;
                     pieceMap[destCol][destRow] = originalDestPiece;
                     setPos(lastPosition);
@@ -135,7 +147,7 @@ bool Piece::isKinginCheck(int destCol, int destRow, QString kingColor) {
             }
         }
     }
-
+    //Revert pieces to original location
     pieceMap[currentCol][currentRow] = this;
     pieceMap[destCol][destRow] = originalDestPiece;
     setPos(lastPosition);
@@ -147,6 +159,7 @@ bool Piece::isStalemate(QString kingColor) {
     int kingCol = kingLoc.x() / squareSize;
     int kingRow = kingLoc.y() / squareSize;
 
+    //Check if king is in check
     for (int i = 0; i < boardSize; i++) {
         for (int j = 0; j < boardSize; j++) {
             Piece* opponentPiece = pieceMap[i][j];
@@ -158,6 +171,7 @@ bool Piece::isStalemate(QString kingColor) {
         }
     }
 
+    //Check for any valid moves
     for (int i = 0; i < boardSize; i++) {
         for (int j = 0; j < boardSize; j++) {
             Piece* teamPiece = pieceMap[i][j];
@@ -173,6 +187,7 @@ bool Piece::isStalemate(QString kingColor) {
             }
         }
     }
+
     return true;
 }
 
@@ -181,6 +196,7 @@ bool Piece::isCheckmate(QString kingColor) {
     int kingCol = kingLoc.x() / squareSize;
     int kingRow = kingLoc.y() / squareSize;
 
+    //Check for any valid moves
     for (int i = 0; i < boardSize; i++) {
         for (int j = 0; j < boardSize; j++) {
             Piece* teamPiece = pieceMap[i][j];
@@ -197,6 +213,7 @@ bool Piece::isCheckmate(QString kingColor) {
         }
     }
 
+    //Check if king is in check
     for (int i = 0; i < boardSize; i++) {
         for (int j = 0; j < boardSize; j++) {
             Piece* opponentPiece = pieceMap[i][j];

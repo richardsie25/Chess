@@ -29,5 +29,6 @@ protected:
     static QGraphicsScene* scene;
     static QGraphicsRectItem* currentHighlight;
     static QGraphicsRectItem* destHighlight;
+    static QString playerTurn;
 };
 

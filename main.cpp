@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 }
 
 /* Things to Implement
-* Changing turns
+* Fix promotion when checking king
 * Display dead piece/ count material
 * En passant
 * Pawn Promotion choose pieces

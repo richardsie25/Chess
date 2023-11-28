@@ -40,15 +40,17 @@ bool Pawn::isValidMove(int destCol, int destRow) {
         }
 
         //Promotion
-        if (destRow == 0 && validMove) {
+        if (destRow == 0 && validMove) {           
             pieceMap[currentCol][currentRow] = nullptr;
             captures(destCol, destRow);
             Queen* promotedQueen = new Queen(color);
             promotedQueen->setOriginalPosition(QPointF(destCol * squareSize, destRow * squareSize));
             scene->addItem(promotedQueen);
+            playerTurn = "black";
             QTimer::singleShot(0, [this]() {
                 scene->removeItem(this);
             });
+            return false;
         }
 
         return validMove;
@@ -78,15 +80,16 @@ bool Pawn::isValidMove(int destCol, int destRow) {
 
         //Promotion
         if (destRow == 7 && validMove) {
-            scene->removeItem(this);
             pieceMap[currentCol][currentRow] = nullptr;
             captures(destCol, destRow);
             Queen* promotedQueen = new Queen(color);
             promotedQueen->setOriginalPosition(QPointF(destCol * squareSize, destRow * squareSize));
             scene->addItem(promotedQueen);
+            playerTurn = "white";
             QTimer::singleShot(0, [this]() {
                 scene->removeItem(this);
             });
+            return false;
         }
 
         return validMove;
