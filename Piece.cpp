@@ -20,9 +20,9 @@ void Piece::setScene(QGraphicsScene* scene) {
     this->scene = scene;
 
     text = new QGraphicsTextItem("White Turn!");
-    QFont font("Times", 50, QFont::Bold);
+    QFont font("Times", squareSize / 2, QFont::Bold);
     text->setFont(font);
-    text->setPos(200, -100);
+    text->setPos(squareSize * 2, -squareSize);
 
     QColor brushColor = QColor(118, 150, 86, 255);
     QBrush brush(brushColor);
@@ -290,9 +290,9 @@ void Piece::processEvents() {
     if (gameState != "")
         message = gameState;
     text = new QGraphicsTextItem(message);
-    QFont font("Times", 50, QFont::Bold);
+    QFont font("Times", squareSize / 2, QFont::Bold);
     text->setFont(font);
-    text->setPos(200, -100);
+    text->setPos(squareSize * 2, -squareSize);
 
     QColor brushColor = QColor(118, 150, 86, 255);
     QBrush brush(brushColor);

@@ -27,7 +27,7 @@ void Board::drawBoard() {
             if (col == 0) {
                 //Font Text
                 QGraphicsTextItem* textItem = new QGraphicsTextItem();
-                QFont font("Times", 14, QFont::Bold);
+                QFont font("Times", squareSize / 7, QFont::Bold);
                 textItem->setFont(font);
 
                 //Font Color
@@ -45,7 +45,7 @@ void Board::drawBoard() {
             if (row == boardSize - 1) {
                 //Font Text
                 QGraphicsTextItem* textItem = new QGraphicsTextItem();
-                QFont font("Times", 14, QFont::Bold);
+                QFont font("Times", squareSize / 7, QFont::Bold);
                 textItem->setFont(font);
 
                 //Font Color
