@@ -18,6 +18,7 @@ public:
     bool isCheckmate(QString kingColor);
     void captures(int destCol, int destRow);
     void highlightSquares(int destCol, int destRow);
+    void processEvents();
     void resetPieceMap();
     virtual bool isValidMove(int destCol, int destRow);
     virtual QString imagePath(QString color);
@@ -30,5 +31,7 @@ protected:
     static QGraphicsRectItem* currentHighlight;
     static QGraphicsRectItem* destHighlight;
     static QString playerTurn;
+    static QString gameState;
+    static QGraphicsTextItem* text;
 };
 

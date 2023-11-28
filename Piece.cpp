@@ -2,12 +2,15 @@
 #include "King.h"
 #include "Rook.h"   
 #include <QDebug>
+#include <QMessageBox>
 
 Piece* Piece::pieceMap[boardSize][boardSize];
 QGraphicsScene* Piece::scene;
 QGraphicsRectItem* Piece::currentHighlight = nullptr;
 QGraphicsRectItem* Piece::destHighlight = nullptr;
 QString Piece::playerTurn = "white";
+QString Piece::gameState = "";
+QGraphicsTextItem* Piece::text = nullptr;
 
 Piece::Piece(QString color, const QPixmap& pixmap, QGraphicsItem* parent): QGraphicsPixmapItem(pixmap, parent) {
     this->color = color;
@@ -15,10 +18,20 @@ Piece::Piece(QString color, const QPixmap& pixmap, QGraphicsItem* parent): QGrap
 
 void Piece::setScene(QGraphicsScene* scene) {
     this->scene = scene;
+
+    text = new QGraphicsTextItem("White Turn!");
+    QFont font("Times", 50, QFont::Bold);
+    text->setFont(font);
+    text->setPos(200, -100);
+
+    QColor brushColor = QColor(118, 150, 86, 255);
+    QBrush brush(brushColor);
+    text->setDefaultTextColor(brush.color());
+    scene->addItem(text);
 }
 
 void Piece::mousePressEvent(QGraphicsSceneMouseEvent* event) {
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::LeftButton && gameState == "") {
         setFlag(QGraphicsItem::ItemIsMovable);
     }
     QGraphicsPixmapItem::mousePressEvent(event);
@@ -78,6 +91,10 @@ void Piece::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
             setPos(lastPosition);
         }
     }
+
+    //Process Events accordingly
+    processEvents();
+
     QGraphicsPixmapItem::mouseReleaseEvent(event);
 }
 
@@ -245,6 +262,49 @@ void Piece::highlightSquares(int destCol, int destRow) {
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
     destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
+}
+
+void Piece::processEvents() {
+    if (playerTurn == "black") {
+        if (isCheckmate("black")) {
+            gameState = "White Wins!";
+        }
+        if (isStalemate("black")) {
+            gameState = "Draw!";
+        }
+    }
+    else if (playerTurn == "white") {
+        if (isCheckmate("white")) {
+            gameState = "Black Wins!";
+        }
+        if (isStalemate("white")) {
+            gameState = "Draw!";
+        }
+    }
+    scene->removeItem(text);
+    QString message;
+    if (playerTurn == "white")
+        message = "White Turn!";
+    if (playerTurn == "black")
+        message = "Black Turn!";
+    if (gameState != "")
+        message = gameState;
+    text = new QGraphicsTextItem(message);
+    QFont font("Times", 50, QFont::Bold);
+    text->setFont(font);
+    text->setPos(200, -100);
+
+    QColor brushColor = QColor(118, 150, 86, 255);
+    QBrush brush(brushColor);
+    text->setDefaultTextColor(brush.color());
+    scene->addItem(text);
+
+    if (!gameState.isEmpty()) {
+        int reply = QMessageBox::question(nullptr, "Game Over!", "Click Ok to Play Again!", QMessageBox::Ok);
+        if (reply == QMessageBox::Ok) {
+
+        }
+    }
 }
 
 void Piece::resetPieceMap() {

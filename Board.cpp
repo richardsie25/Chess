@@ -152,9 +152,9 @@ void Board::placeBlack() {
 }
 
 void Board::displayBoardState(QString string) {
-
     clearBoard();
     Piece* piece{};
+    piece->setScene(scene);
     int row = 0, col = 0;
     for (QChar ch : string) {
         if (ch == '/') {
@@ -203,8 +203,6 @@ void Board::displayBoardState(QString string) {
                 piece = new King("white");
                 break;
             }
-
-            piece->setScene(scene);
             scene->addItem(piece);
             piece->setOriginalPosition(QPointF(col * squareSize, row * squareSize));
             col++;

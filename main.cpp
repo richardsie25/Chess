@@ -4,7 +4,6 @@
 #include "Game.h"
 
 int main(int argc, char* argv[]) {
-
     QApplication app(argc, argv);
     Game game;
     game.show();
@@ -12,7 +11,6 @@ int main(int argc, char* argv[]) {
 }
 
 /* Things to Implement
-* Fix promotion when checking king
 * Display dead piece/ count material
 * En passant
 * Pawn Promotion choose pieces
