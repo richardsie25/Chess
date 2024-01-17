@@ -300,10 +300,7 @@ void Piece::processEvents() {
     scene->addItem(text);
 
     if (!gameState.isEmpty()) {
-        int reply = QMessageBox::question(nullptr, "Game Over!", "Click Ok to Play Again!", QMessageBox::Ok);
-        if (reply == QMessageBox::Ok) {
-
-        }
+        int reply = QMessageBox::question(nullptr, "Game Over!", gameState , QMessageBox::Ok);
     }
 }
 

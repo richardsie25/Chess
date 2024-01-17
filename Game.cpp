@@ -14,8 +14,8 @@ Game::Game(QWidget *parent) : QGraphicsView(parent) {
 
     board = new Board(scene);
     board->drawBoard();
-    //board->resetDefaultBoard();
-    board->displayBoardState("8/8/8/8/8/1k6/2r5/K7");
+    board->resetDefaultBoard();
+    //board->displayBoardState("8/8/8/8/8/1k6/2r5/K7");
 }
 
 Game::~Game() {
