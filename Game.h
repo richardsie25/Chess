@@ -15,7 +15,6 @@ class Game : public QGraphicsView
 public:
     Game(QWidget* parent = nullptr);
     ~Game();
-    void displayBoardState(QString fen);
 
 private:
     Ui::GameClass ui;

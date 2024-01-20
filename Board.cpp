@@ -9,10 +9,418 @@
 
 Board::Board(QGraphicsScene* scene){
     this->scene = scene;
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            pieceMap[row][col] = nullptr;
+        }
+    }
 }
 
 Board::~Board() {
     
+}
+
+bool Board::onPiecePressed(Piece* piece) {
+    return gameState == "";
+}
+
+void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
+    int destCol = releasePos.x() / squareSize;
+    int destRow = releasePos.y() / squareSize;
+    int currentCol = piece->getPosition().x() / squareSize;
+    int currentRow = piece->getPosition().y() / squareSize;
+    
+    if (piece->getColor() == playerTurn && !isKinginCheck(destCol, destRow, piece) && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && isEnemy(destCol,destRow, piece)) {
+
+        //Highlight Squares
+        highlightSquares(destCol, destRow, piece);
+
+        //Update position and pieceMap
+        piece->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+        pieceMap[currentRow][currentCol] = nullptr;
+        pieceMap[destRow][destCol] = piece;
+
+        //Castling Flag
+        if (dynamic_cast<King*>(piece))
+            dynamic_cast<King*>(piece)->hasMoved = true;
+        if (dynamic_cast<Rook*>(piece))
+            dynamic_cast<Rook*>(piece)->hasMoved = true;
+
+        //Pawn Promotion Check
+        if (dynamic_cast<Pawn*>(piece)) {
+            if ((piece->getColor() == "white" && destRow == 0) || (piece->getColor() == "black" && destRow == 7)) {
+                Queen* promotedQueen = new Queen(piece->getColor());
+                promotedQueen->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+                scene->addItem(promotedQueen);
+                pieceMap[destRow][destCol] = promotedQueen;
+                connect(promotedQueen, &Piece::piecePressed, this, &Board::onPiecePressed);
+                connect(promotedQueen, &Piece::pieceReleased, this, &Board::onPieceReleased);
+                QTimer::singleShot(0, [this, piece]() {
+                    scene->removeItem(piece);
+                    delete piece;
+                    });
+            }
+        }
+
+        //Switch Player Turn
+        if (playerTurn == "white") {
+            playerTurn = "black";
+        }
+        else {
+            playerTurn = "white";
+        }
+    }
+    else {
+        piece->setPosition(piece->getPosition());
+    }
+    processEvents();
+}
+
+bool Board::isValidPos(int destCol, int destRow) {
+    return destCol >= 0 && destCol < boardSize * squareSize && destRow >= 0 && destRow < boardSize * squareSize;
+}
+
+bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
+    int currentCol = piece->getPosition().x() / squareSize;
+    int currentRow = piece->getPosition().y() / squareSize;
+
+    //Rook Collision Check
+    if (dynamic_cast<Rook*>(piece)) {
+        //Horizontal Collision Check
+        int startCol = std::min(currentCol, destCol);
+        int endCol = std::max(currentCol, destCol);
+        for (int col = startCol; col < endCol; col++) {
+            if (col != currentCol && col != destCol && pieceMap[destRow][col] != nullptr) {
+                return true;
+            }
+        }
+        //Vertical Collision Check
+        int startRow = std::min(currentRow, destRow);
+        int endRow = std::max(currentRow, destRow);
+        for (int row = startRow; row < endRow; row++) {
+            if (row != currentRow && row != destRow && pieceMap[row][destCol] != nullptr) {
+                return true;
+            }
+        }
+    }
+
+    //Bishop Collision Check
+    if (dynamic_cast<Bishop*>(piece)) {
+        //Diagonal Collision Check
+        int colStep = (destCol > currentCol) ? 1 : -1;
+        int rowStep = (destRow > currentRow) ? 1 : -1;
+        for (int col = currentCol + colStep, row = currentRow + rowStep; col != destCol; col += colStep, row += rowStep) {
+            if (pieceMap[row][col] != nullptr) {
+                return true;
+            }
+        }
+    }
+
+    //Queen Collision Check
+    if (dynamic_cast<Queen*>(piece)) {
+        //Horizonal Movement Collision Check
+        if (destCol != currentCol && destRow == currentRow) {
+            int startCol = std::min(currentCol, destCol);
+            int endCol = std::max(currentCol, destCol);
+            for (int col = startCol; col < endCol; col++) {
+                if (col != currentCol && col != destCol && pieceMap[destRow][col] != nullptr) {
+                    return true;
+                }
+            }
+        }
+        //Vertical Movement Collision Check
+        if (destCol == currentCol && destRow != currentRow) {
+            int startRow = std::min(currentRow, destRow);
+            int endRow = std::max(currentRow, destRow);
+            for (int row = startRow; row < endRow; row++) {
+                if (row != currentRow && row != destRow && pieceMap[row][destCol] != nullptr) {
+                    return true;
+                }
+            }
+        }
+        //Diagonal Movement Collision Check
+        if (qAbs(destCol - currentCol) == qAbs(destRow - currentRow)) {
+            int colStep = (destCol > currentCol) ? 1 : -1;
+            int rowStep = (destRow > currentRow) ? 1 : -1;
+            for (int col = currentCol + colStep, row = currentRow + rowStep; col != destCol; col += colStep, row += rowStep) {
+                if (pieceMap[row][col] != nullptr) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    //Pawn Collision Check
+    if (dynamic_cast<Pawn*>(piece)) {
+        if (piece->getColor() == "white") {
+            if (destCol == currentCol) {
+                if (destRow == currentRow - 2) {
+                    return pieceMap[destRow][destCol] != nullptr || pieceMap[destRow + 1][destCol] != nullptr;
+                }
+                else if (destRow == currentRow - 1) {
+                    return pieceMap[destRow][destCol] != nullptr;
+                }
+            }
+            if (qAbs(destCol - currentCol) == 1 && destRow == currentRow - 1) {
+                if (pieceMap[destRow][destCol] != nullptr) {
+                    return pieceMap[destRow][destCol]->getColor() == piece->getColor();
+                }
+                return true;
+            }
+        }
+
+        else {
+            if (destCol == currentCol) {
+                if (destRow == currentRow + 2) {
+                    return pieceMap[destRow][destCol] != nullptr || pieceMap[destRow - 1][destCol] != nullptr;
+                }
+                else if (destRow == currentRow + 1) {
+                    return pieceMap[destRow][destCol] != nullptr;
+                }
+            }
+            if (qAbs(destCol - currentCol) == 1 && destRow == currentRow + 1) {
+                if (pieceMap[destRow][destCol] != nullptr) {
+                    return pieceMap[destRow][destCol]->getColor() == piece->getColor();
+                }
+                return true;
+            }
+        }
+    }
+
+    //Castling Check
+    if (dynamic_cast<King*>(piece)) {
+        //King Side Castling
+        if (destRow == currentRow && destCol - currentCol == 2) {
+            if (pieceMap[currentRow][currentCol + 1] != nullptr || pieceMap[currentRow][currentCol + 2] != nullptr)
+                return true;
+            if (isKinginCheck(currentCol, currentRow, piece) || isKinginCheck(currentCol + 1, currentRow, piece) || isKinginCheck(currentCol + 2, currentRow, piece))
+                return true;
+            Piece* rook = pieceMap[destRow][destCol + 1];
+            if (rook && dynamic_cast<Rook*>(rook) && dynamic_cast<Rook*>(rook)->hasMoved == false) {
+                pieceMap[destRow][destCol - 1] = rook;
+                pieceMap[destRow][destCol + 1] = nullptr;
+                rook->setPosition(QPointF((destCol - 1) * squareSize, destRow * squareSize));
+                return false;
+            }
+            return true;
+        }
+
+        //Queen Side Castling
+        if (destRow == currentRow && destCol - currentCol == -2) {
+            if (pieceMap[currentRow][currentCol - 1] != nullptr || pieceMap[currentRow][currentCol - 2] != nullptr || pieceMap[currentRow][currentCol - 3] != nullptr)
+                return true;
+            if (isKinginCheck(currentCol, currentRow, piece) || isKinginCheck(currentCol - 1, currentRow, piece) || isKinginCheck(currentCol - 2, currentRow, piece))
+                return true;
+            Piece* rook = pieceMap[destRow][destCol - 2];
+            if (rook && dynamic_cast<Rook*>(rook) && dynamic_cast<Rook*>(rook)->hasMoved == false) {
+                pieceMap[destRow][destCol + 1] = rook;
+                pieceMap[destRow][destCol - 2] = nullptr;
+                rook->setPosition(QPointF((destCol + 1) * squareSize, destRow * squareSize));
+                return false;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Board::isEnemy(int destCol, int destRow, Piece* piece) {
+    if (pieceMap[destRow][destCol] != nullptr) {
+        if (piece->getColor() != pieceMap[destRow][destCol]->getColor()) {
+            captures(destCol, destRow);
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+void Board::captures(int destCol, int destRow) {
+    Piece* piece = pieceMap[destRow][destCol];
+    scene->removeItem(piece);
+    delete piece;
+}
+
+QPointF Board::getKingLocation(QString kingColor) {
+    int kingCol = -1;
+    int kingRow = -1;
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            Piece* piece = pieceMap[row][col];
+            if (piece && piece->getColor() == kingColor && dynamic_cast<King*>(piece)) {
+                kingCol = col;
+                kingRow = row;
+                break;
+            }
+        }
+    }
+    return QPointF(kingCol * squareSize, kingRow * squareSize);
+}
+
+bool Board::isKinginCheck(int destCol, int destRow, Piece* piece) {
+    int currentCol = piece->getPosition().x() / squareSize;
+    int currentRow = piece->getPosition().y() / squareSize;
+
+    //Move piece temporarily
+    Piece* originalDestPiece = pieceMap[destRow][destCol];
+    QPointF originalPosition = piece->getPosition();
+    pieceMap[currentRow][currentCol] = nullptr;
+    pieceMap[destRow][destCol] = piece;
+    piece->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+
+    //Get king location
+    QPointF kingLoc = getKingLocation(piece->getColor());
+    int kingCol = kingLoc.x() / squareSize;
+    int kingRow = kingLoc.y() / squareSize;
+
+    //Check if king is checked
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* opponentPiece = pieceMap[i][j];
+            if (opponentPiece && opponentPiece->getColor() != piece->getColor()) {
+                if (opponentPiece->isValidMove(kingCol, kingRow) && !collisionCheck(kingCol, kingRow, opponentPiece)) {
+                    //Revert pieces to original location
+                    pieceMap[currentRow][currentCol] = piece;
+                    pieceMap[destRow][destCol] = originalDestPiece;
+                    piece->setPosition(originalPosition);
+                    return true;
+                }
+            }
+        }
+    }
+    //Revert pieces to original location
+    pieceMap[currentRow][currentCol] = piece;
+    pieceMap[destRow][destCol] = originalDestPiece;
+    piece->setPosition(originalPosition);
+    return false;
+}
+
+bool Board::isStalemate(QString kingColor) {
+    QPointF kingLoc = getKingLocation(kingColor);
+    int kingCol = kingLoc.x() / squareSize;
+    int kingRow = kingLoc.y() / squareSize;
+
+    //Check if king is in check
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* opponentPiece = pieceMap[i][j];
+            if (opponentPiece && opponentPiece->getColor() != kingColor) {
+                if (opponentPiece->isValidMove(kingCol, kingRow) && !collisionCheck(kingCol, kingRow, opponentPiece)) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    //Check for any valid moves
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* teamPiece = pieceMap[i][j];
+            if (teamPiece && teamPiece->getColor() == kingColor) {
+                for (int k = 0; k < boardSize; k++) {
+                    for (int l = 0; l < boardSize; l++) {
+                        if (teamPiece->isValidMove(k, l) && !collisionCheck(k, l, teamPiece) && (pieceMap[l][k] == nullptr || pieceMap[l][k]->getColor() != kingColor)) {
+                            if (!isKinginCheck(k, l, teamPiece))
+                                return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Board::isCheckmate(QString kingColor) {
+    QPointF kingLoc = getKingLocation(kingColor);
+    int kingCol = kingLoc.x() / squareSize;
+    int kingRow = kingLoc.y() / squareSize;
+
+    //Check for any valid moves
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* teamPiece = pieceMap[i][j];
+            if (teamPiece && teamPiece->getColor() == kingColor) {
+                for (int k = 0; k < boardSize; k++) {
+                    for (int l = 0; l < boardSize; l++) {
+                        if (teamPiece->isValidMove(k, l) && !collisionCheck(k, l, teamPiece) && (pieceMap[l][k] == nullptr || pieceMap[l][k]->getColor() != kingColor)) {
+                            if (!isKinginCheck(k, l, teamPiece))
+                                return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //Check if king is in check
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Piece* opponentPiece = pieceMap[i][j];
+            if (opponentPiece && opponentPiece->getColor() != kingColor) {
+                if (opponentPiece->isValidMove(kingCol, kingRow) && !collisionCheck(kingCol, kingRow, opponentPiece)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+void Board::processEvents() {
+    if (playerTurn == "black") {
+        if (isCheckmate("black")) {
+            gameState = "White Wins!";
+        }
+        if (isStalemate("black")) {
+            gameState = "Draw!";
+        }
+    }
+    else if (playerTurn == "white") {
+        if (isCheckmate("white")) {
+            gameState = "Black Wins!";
+        }
+        if (isStalemate("white")) {
+            gameState = "Draw!";
+        }
+    }
+    scene->removeItem(text);
+    QString message;
+    if (playerTurn == "white")
+        message = "White Turn!";
+    if (playerTurn == "black")
+        message = "Black Turn!";
+    if (gameState != "")
+        message = gameState;
+    text = new QGraphicsTextItem(message);
+    QFont font("Times", squareSize / 2, QFont::Bold);
+    text->setFont(font);
+    text->setPos(squareSize * 2, -squareSize);
+
+    QColor brushColor = QColor(118, 150, 86, 255);
+    QBrush brush(brushColor);
+    text->setDefaultTextColor(brush.color());
+    scene->addItem(text);
+
+    if (!gameState.isEmpty()) {
+        QMessageBox::StandardButton reply = QMessageBox::question(nullptr, "Game Over!", gameState + "\nWould you like to play again?", QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            scene->removeItem(text);
+            resetDefaultBoard();
+        }
+    }
+}
+
+void Board::highlightSquares(int destCol, int destRow, Piece* piece){
+    scene->removeItem(currentHighlight);
+    scene->removeItem(destHighlight);
+    currentHighlight = scene->addRect(piece->getPosition().x(), piece->getPosition().y(), squareSize, squareSize,
+        QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
+    destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
+        QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
 }
 
 void Board::drawBoard() {
@@ -75,40 +483,66 @@ void Board::placeWhite() {
     for (int i = 0; i < boardSize; i++) {
         piece = new Pawn("white");
         scene->addItem(piece);
-        piece->setOriginalPosition(QPointF(i * squareSize, 6 * squareSize));
+        piece->setPosition(QPointF(i * squareSize, 6 * squareSize));
+        pieceMap[6][i] = piece;
+        connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+        connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
     }
-    piece->setScene(scene);
     piece = new Rook("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(0, 7 * squareSize));
+    piece->setPosition(QPointF(0, 7 * squareSize));
+    pieceMap[7][0] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Knight("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(squareSize, 7 * squareSize));
-
+    piece->setPosition(QPointF(squareSize, 7 * squareSize));
+    pieceMap[7][1] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
+    
     piece = new Bishop("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(2 * squareSize, 7 * squareSize));
-
+    piece->setPosition(QPointF(2 * squareSize, 7 * squareSize));
+    pieceMap[7][2] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
+    
     piece = new Queen("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(3 * squareSize, 7 * squareSize));
+    piece->setPosition(QPointF(3 * squareSize, 7 * squareSize));
+    pieceMap[7][3] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new King("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(4 * squareSize, 7 * squareSize));
+    piece->setPosition(QPointF(4 * squareSize, 7 * squareSize));
+    pieceMap[7][4] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Bishop("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(5 * squareSize, 7 * squareSize));
+    piece->setPosition(QPointF(5 * squareSize, 7 * squareSize));
+    pieceMap[7][5] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Knight("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(6 * squareSize, 7 * squareSize));
+    piece->setPosition(QPointF(6 * squareSize, 7 * squareSize));
+    pieceMap[7][6] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Rook("white");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(7 * squareSize, 7 * squareSize));
+    piece->setPosition(QPointF(7 * squareSize, 7 * squareSize));
+    pieceMap[7][7] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 }
 
 void Board::placeBlack() {
@@ -116,109 +550,98 @@ void Board::placeBlack() {
     for (int i = 0; i < boardSize; i++) {
         piece = new Pawn("black");
         scene->addItem(piece);
-        piece->setOriginalPosition(QPointF(i * squareSize, squareSize));
+        piece->setPosition(QPointF(i * squareSize, squareSize));
+        pieceMap[1][i] = piece;
+        connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+        connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
     }
     piece = new Rook("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(0, 0));
+    piece->setPosition(QPointF(0, 0));
+    pieceMap[0][0] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Knight("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(squareSize, 0));
+    piece->setPosition(QPointF(squareSize, 0));
+    pieceMap[0][1] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Bishop("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(2 * squareSize, 0));
+    piece->setPosition(QPointF(2 * squareSize, 0));
+    pieceMap[0][2] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Queen("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(3 * squareSize, 0));
+    piece->setPosition(QPointF(3 * squareSize, 0));
+    pieceMap[0][3] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new King("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(4 * squareSize, 0));
+    piece->setPosition(QPointF(4 * squareSize, 0));
+    pieceMap[0][4] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Bishop("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(5 * squareSize, 0));
+    piece->setPosition(QPointF(5 * squareSize, 0));
+    pieceMap[0][5] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Knight("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(6 * squareSize, 0));
+    piece->setPosition(QPointF(6 * squareSize, 0));
+    pieceMap[0][6] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 
     piece = new Rook("black");
     scene->addItem(piece);
-    piece->setOriginalPosition(QPointF(7 * squareSize, 0));
-}
-
-void Board::displayBoardState(QString string) {
-    clearBoard();
-    Piece* piece{};
-    piece->setScene(scene);
-    int row = 0, col = 0;
-    for (QChar ch : string) {
-        if (ch == '/') {
-            row++;
-            col = 0;
-        }
-        else if (ch.isDigit()) {
-            col += ch.digitValue();
-        }
-        else {
-            switch (ch.unicode()) {
-            case 'p':
-                piece = new Pawn("black");
-                break;
-            case 'P':
-                piece = new Pawn("white");
-                break;
-            case 'r':
-                piece = new Rook("black");
-                break;
-            case 'R':
-                piece = new Rook("white");
-                break;
-            case 'n':
-                piece = new Knight("black");
-                break;
-            case 'N':
-                piece = new Knight("white");
-                break;
-            case 'b':
-                piece = new Bishop("black");
-                break;
-            case 'B':
-                piece = new Bishop("white");
-                break;
-            case 'q':
-                piece = new Queen("black");
-                break;
-            case 'Q':
-                piece = new Queen("white");
-                break;
-            case 'k':
-                piece = new King("black");
-                break;
-            case 'K':
-                piece = new King("white");
-                break;
-            }
-            scene->addItem(piece);
-            piece->setOriginalPosition(QPointF(col * squareSize, row * squareSize));
-            col++;
-        }
-    }
+    piece->setPosition(QPointF(7 * squareSize, 0));
+    pieceMap[0][7] = piece;
+    connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+    connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
 }
 
 void Board::clearBoard() {
     for (QGraphicsItem* item : scene->items()) {
         if (dynamic_cast<Piece*>(item)) {
-            dynamic_cast<Piece*>(item)->resetPieceMap();
-            scene->removeItem(item);
-            delete item;
+            QTimer::singleShot(0, [this, item]() {
+                scene->removeItem(item);
+                delete item;
+                });
         }
     }
-    
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            pieceMap[row][col] = nullptr;
+        }
+    }
+
+    scene->removeItem(currentHighlight);
+    scene->removeItem(destHighlight);
+    currentHighlight = nullptr;
+    destHighlight = nullptr;
+    playerTurn = "white";
+    gameState = "";
+    text = new QGraphicsTextItem("White Turn!");
+    QFont font("Times", squareSize / 2, QFont::Bold);
+    text->setFont(font);
+    text->setPos(squareSize * 2, -squareSize);
+
+    QColor brushColor = QColor(118, 150, 86, 255);
+    QBrush brush(brushColor);
+    text->setDefaultTextColor(brush.color());
+    scene->addItem(text);
 }
 
 

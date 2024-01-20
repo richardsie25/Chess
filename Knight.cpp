@@ -13,7 +13,6 @@ QString Knight::imagePath(QString color) {
 bool Knight::isValidMove(int destCol, int destRow) {
     int currentCol = lastPosition.x() / squareSize;
     int currentRow = lastPosition.y() / squareSize;
-
     int colDiff = qAbs(destCol - currentCol);
     int rowDiff = qAbs(destRow - currentRow);
     return (colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2);

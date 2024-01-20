@@ -20,34 +20,8 @@ bool King::isValidMove(int destCol, int destRow) {
         return true;
     }
 
-    //King Side Castling
-    if (!hasMoved && destRow == currentRow && destCol - currentCol == 2) {
-        if (isOccupied(currentCol + 1, currentRow) || isOccupied(currentCol + 2, currentRow))
-            return false;
-        if (isKinginCheck(currentCol, currentRow, color) || isKinginCheck(currentCol + 1, currentRow, color) || isKinginCheck(currentCol + 2, currentRow, color))
-            return false;
-        Piece* piece = pieceMap[destCol + 1][destRow];
-        if (piece && dynamic_cast<Rook*>(piece) && dynamic_cast<Rook*>(piece)->hasMoved == false) {
-            pieceMap[destCol - 1][destRow] = pieceMap[destCol + 1][destRow];
-            pieceMap[destCol + 1][destRow] = nullptr;
-            piece->setOriginalPosition(QPointF((destCol - 1) * squareSize, destRow * squareSize));
-            return true;
-        }
-    }
-
-    //Queen Side Castling
-    if (!hasMoved && destRow == currentRow && destCol - currentCol == -2) {
-        if (isOccupied(currentCol - 1, currentRow) || isOccupied(currentCol - 2, currentRow) || isOccupied(currentCol - 3, currentRow))
-            return false;
-        if (isKinginCheck(currentCol, currentRow, color) || isKinginCheck(currentCol - 1, currentRow, color) || isKinginCheck(currentCol - 2, currentRow, color))
-            return false;
-        Piece* piece = pieceMap[destCol - 2][destRow];
-        if (piece && dynamic_cast<Rook*>(piece) && dynamic_cast<Rook*>(piece)->hasMoved == false) {
-            pieceMap[destCol + 1][destRow] = pieceMap[destCol - 2][destRow];
-            pieceMap[destCol - 2][destRow] = nullptr;
-            piece->setOriginalPosition(QPointF((destCol + 1) * squareSize, destRow * squareSize));
-            return true;
-        }
+    if (!hasMoved && destRow == currentRow && qAbs(destCol - currentCol) == 2) {
+        return true;
     }
 
     return false;
