@@ -6,6 +6,8 @@
 #include "Rook.h"
 #include "Queen.h"
 #include "King.h"
+#include <QGridLayout>
+#include <QPushButton>
 
 Board::Board(QGraphicsScene* scene){
     this->scene = scene;
@@ -54,31 +56,17 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
             dynamic_cast<Rook*>(piece)->hasMoved = true;
 
         //Pawn Promotion Check
-        if (dynamic_cast<Pawn*>(piece)) {
-            if ((piece->getColor() == "white" && destRow == 0) || (piece->getColor() == "black" && destRow == 7)) {
-                Queen* promotedQueen = new Queen(piece->getColor());
-                promotedQueen->wasPawn = true;
-                promotedQueen->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
-                scene->addItem(promotedQueen);
-                pieceMap[destRow][destCol] = promotedQueen;
-                connect(promotedQueen, &Piece::piecePressed, this, &Board::onPiecePressed);
-                connect(promotedQueen, &Piece::pieceReleased, this, &Board::onPieceReleased);
-                QTimer::singleShot(0, [this, piece]() {
-                    scene->removeItem(piece);
-                    });
-            }
-        }
+        handlePromotions(destCol, destRow, piece);
 
         //Display Dead Material
         displayDeadMaterial();
 
         //Switch Player Turn
-        if (playerTurn == "white") {
+        if (playerTurn == "white") 
             playerTurn = "black";
-        }
-        else {
+        else 
             playerTurn = "white";
-        }
+
     }
     else {
         piece->setPosition(piece->getPosition());
@@ -376,6 +364,74 @@ bool Board::isCheckmate(QString kingColor) {
     }
 
     return false;
+}
+
+void Board::handlePromotions(int destCol, int destRow, Piece* piece) {
+    if (dynamic_cast<Pawn*>(piece) && ((piece->getColor() == "white" && destRow == 0) || (piece->getColor() == "black" && destRow == 7))) {
+        QDialog promotionDialog;
+        promotionDialog.setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint | Qt::Popup);
+        promotionDialog.setModal(true);
+        promotionDialog.setWindowTitle("Pawn Promotion");
+        QGridLayout layout(&promotionDialog);
+
+        QStringList pieceTypes = { "Queen", "Rook", "Bishop", "Knight" };
+        for (const QString& type : pieceTypes) {
+            QPushButton* button = new QPushButton();
+            QIcon pieceIcon(piece->getColor() + type + ".png");
+            button->setIcon(pieceIcon);
+            button->setIconSize(QSize(64, 64));
+            layout.addWidget(button);
+
+            connect(button, &QPushButton::clicked, [&promotionDialog, this, destCol, destRow, piece, type]() {
+                addPiecePromotion(destCol, destRow, piece, type);
+                promotionDialog.accept();
+                });
+        }
+
+        promotionDialog.exec();
+    }
+}
+
+void Board::addPiecePromotion(int destCol, int destRow, Piece* piece, QString type) {
+    if (type == "Queen") {
+        Queen* promotedQueen = new Queen(piece->getColor());
+        promotedQueen->wasPawn = true;
+        promotedQueen->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+        scene->addItem(promotedQueen);
+        pieceMap[destRow][destCol] = promotedQueen;
+        connect(promotedQueen, &Piece::piecePressed, this, &Board::onPiecePressed);
+        connect(promotedQueen, &Piece::pieceReleased, this, &Board::onPieceReleased);
+    }
+    else if (type == "Rook") {
+        Rook* promotedRook = new Rook(piece->getColor());
+        promotedRook->wasPawn = true;
+        promotedRook->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+        scene->addItem(promotedRook);
+        pieceMap[destRow][destCol] = promotedRook;
+        connect(promotedRook, &Piece::piecePressed, this, &Board::onPiecePressed);
+        connect(promotedRook, &Piece::pieceReleased, this, &Board::onPieceReleased);
+    }
+    else if (type == "Bishop") {
+        Bishop* promotedBishop = new Bishop(piece->getColor());
+        promotedBishop->wasPawn = true;
+        promotedBishop->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+        scene->addItem(promotedBishop);
+        pieceMap[destRow][destCol] = promotedBishop;
+        connect(promotedBishop, &Piece::piecePressed, this, &Board::onPiecePressed);
+        connect(promotedBishop, &Piece::pieceReleased, this, &Board::onPieceReleased);
+    }
+    else if (type == "Knight") {
+        Knight* promotedKnight = new Knight(piece->getColor());
+        promotedKnight->wasPawn = true;
+        promotedKnight->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
+        scene->addItem(promotedKnight);
+        pieceMap[destRow][destCol] = promotedKnight;
+        connect(promotedKnight, &Piece::piecePressed, this, &Board::onPiecePressed);
+        connect(promotedKnight, &Piece::pieceReleased, this, &Board::onPieceReleased);
+    }
+    QTimer::singleShot(0, [this, piece]() {
+        scene->removeItem(piece);
+        });
 }
 
 void Board::processEvents() {

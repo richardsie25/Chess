@@ -20,6 +20,8 @@ public:
     bool isKinginCheck(int destCol, int destRow, Piece* piece);
     bool isStalemate(QString kingColor);
     bool isCheckmate(QString kingColor);
+    void handlePromotions(int destCol, int destRow, Piece *piece);
+    void addPiecePromotion(int destCol, int destRow, Piece* piece, QString type);
     void processEvents();
     void highlightSquares();
     int materialCounter();
