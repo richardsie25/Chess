@@ -12,6 +12,7 @@ Board::Board(QGraphicsScene* scene){
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
             pieceMap[row][col] = nullptr;
+            previousPieceMap[row][col] = nullptr;
         }
     }
 }
@@ -30,15 +31,21 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
     int currentCol = piece->getPosition().x() / squareSize;
     int currentRow = piece->getPosition().y() / squareSize;
     
-    if (piece->getColor() == playerTurn && !isKinginCheck(destCol, destRow, piece) && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && isEnemy(destCol,destRow, piece)) {
+    if (piece->getColor() == playerTurn && !isKinginCheck(destCol, destRow, piece) && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && !isTeam(destCol,destRow, piece)) {
 
-        //Highlight Squares
-        highlightSquares(destCol, destRow, piece);
+        //Copy PieceMap
+        copyPieceMap();
+
+        if (isEnemy(destCol,destRow, piece))
+            captures(destCol,destRow);
 
         //Update position and pieceMap
         piece->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
         pieceMap[currentRow][currentCol] = nullptr;
         pieceMap[destRow][destCol] = piece;
+
+        //Highlight squares
+        highlightSquares();
 
         //Castling Flag
         if (dynamic_cast<King*>(piece))
@@ -57,7 +64,6 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
                 connect(promotedQueen, &Piece::pieceReleased, this, &Board::onPieceReleased);
                 QTimer::singleShot(0, [this, piece]() {
                     scene->removeItem(piece);
-                    delete piece;
                     });
             }
         }
@@ -162,10 +168,7 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
                 }
             }
             if (qAbs(destCol - currentCol) == 1 && destRow == currentRow - 1) {
-                if (pieceMap[destRow][destCol] != nullptr) {
-                    return pieceMap[destRow][destCol]->getColor() == piece->getColor();
-                }
-                return true;
+                return pieceMap[destRow][destCol] == nullptr;
             }
         }
 
@@ -179,10 +182,7 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
                 }
             }
             if (qAbs(destCol - currentCol) == 1 && destRow == currentRow + 1) {
-                if (pieceMap[destRow][destCol] != nullptr) {
-                    return pieceMap[destRow][destCol]->getColor() == piece->getColor();
-                }
-                return true;
+                return pieceMap[destRow][destCol] == nullptr;
             }
         }
     }
@@ -225,21 +225,25 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
     return false;
 }
 
+bool Board::isTeam(int destCol, int destRow, Piece* piece) {
+    return pieceMap[destRow][destCol] != nullptr && pieceMap[destRow][destCol]->getColor() == piece->getColor();
+}
+
 bool Board::isEnemy(int destCol, int destRow, Piece* piece) {
-    if (pieceMap[destRow][destCol] != nullptr) {
-        if (piece->getColor() != pieceMap[destRow][destCol]->getColor()) {
-            captures(destCol, destRow);
-            return true;
-        }
-        return false;
-    }
-    return true;
+    return pieceMap[destRow][destCol] != nullptr && pieceMap[destRow][destCol]->getColor() != piece->getColor();
 }
 
 void Board::captures(int destCol, int destRow) {
     Piece* piece = pieceMap[destRow][destCol];
     scene->removeItem(piece);
-    delete piece;
+}
+
+void Board::copyPieceMap(){
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            previousPieceMap[row][col] = pieceMap[row][col];
+        }
+    }
 }
 
 QPointF Board::getKingLocation(QString kingColor) {
@@ -387,7 +391,9 @@ void Board::processEvents() {
             gameState = "Draw!";
         }
     }
+    //Change Text
     scene->removeItem(text);
+
     QString message;
     if (playerTurn == "white")
         message = "White Turn!";
@@ -395,6 +401,7 @@ void Board::processEvents() {
         message = "Black Turn!";
     if (gameState != "")
         message = gameState;
+
     text = new QGraphicsTextItem(message);
     QFont font("Times", squareSize / 2, QFont::Bold);
     text->setFont(font);
@@ -405,6 +412,9 @@ void Board::processEvents() {
     text->setDefaultTextColor(brush.color());
     scene->addItem(text);
 
+    //Display Dead Material
+    displayDeadMaterial();
+
     if (!gameState.isEmpty()) {
         QMessageBox::StandardButton reply = QMessageBox::question(nullptr, "Game Over!", gameState + "\nWould you like to play again?", QMessageBox::Yes | QMessageBox::No);
         if (reply == QMessageBox::Yes) {
@@ -414,13 +424,98 @@ void Board::processEvents() {
     }
 }
 
-void Board::highlightSquares(int destCol, int destRow, Piece* piece){
+void Board::highlightSquares(){
     scene->removeItem(currentHighlight);
     scene->removeItem(destHighlight);
-    currentHighlight = scene->addRect(piece->getPosition().x(), piece->getPosition().y(), squareSize, squareSize,
+    QPointF pieceOriginalPos, pieceDestPos;
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            if (previousPieceMap[row][col] != pieceMap[row][col] && pieceMap[row][col] == nullptr) {
+                pieceOriginalPos.setX(col * squareSize);
+                pieceOriginalPos.setY(row * squareSize);
+            }
+            else if (previousPieceMap[row][col] != pieceMap[row][col]) {
+                pieceDestPos.setX(col * squareSize);
+                pieceDestPos.setY(row * squareSize);
+            }
+        }
+    }
+    currentHighlight = scene->addRect(pieceOriginalPos.x(), pieceOriginalPos.y(), squareSize, squareSize,
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
-    destHighlight = scene->addRect(destCol * squareSize, destRow * squareSize, squareSize, squareSize,
+    destHighlight = scene->addRect(pieceDestPos.x(), pieceDestPos.y(), squareSize, squareSize,
         QPen(Qt::transparent), QBrush(QColor(255, 255, 0, 50)));
+}
+
+int Board::materialCounter() {
+    int whiteTotalScore = 0;
+    int blackTotalScore = 0;
+    int score;
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            if(pieceMap[row][col] != nullptr){
+                if (dynamic_cast<Queen*>(pieceMap[row][col]))
+                    score = 9;
+                else if (dynamic_cast<Rook*>(pieceMap[row][col]))
+                    score = 5;
+                else if (dynamic_cast<Knight*>(pieceMap[row][col]))
+                    score = 3;
+                else if (dynamic_cast<Bishop*>(pieceMap[row][col]))
+                    score = 3;
+                else if (dynamic_cast<Pawn*>(pieceMap[row][col]))
+                    score = 1;
+
+                if (pieceMap[row][col]->getColor() == "white")
+                    whiteTotalScore += score;
+                else
+                    blackTotalScore += score;
+            }
+        }
+    }
+    return whiteTotalScore - blackTotalScore;
+}
+
+void Board::displayDeadMaterial() {
+    int whiteRow = 0;
+    int whiteCol = 0;
+    int blackRow = 0;
+    int blackCol = 0;
+
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            if (previousPieceMap[row][col] != nullptr && pieceMap[row][col] != nullptr && previousPieceMap[row][col]->getColor() != pieceMap[row][col]->getColor()) {
+
+                // A piece was captured
+                Piece* capturedPiece = previousPieceMap[row][col];
+                QString imagePath = capturedPiece->getColor();
+                if (dynamic_cast<Queen*>(capturedPiece))
+                    imagePath += "Queen.png";
+                else if (dynamic_cast<Bishop*>(capturedPiece))
+                    imagePath += "Bishop.png";
+                else if (dynamic_cast<Knight*>(capturedPiece))
+                    imagePath += "Knight.png";
+                else if (dynamic_cast<Rook*>(capturedPiece))
+                    imagePath += "Rook.png";
+                else if (dynamic_cast<Pawn*>(capturedPiece))
+                    imagePath += "Pawn.png";
+
+                QGraphicsPixmapItem* capturedPieceItem = new QGraphicsPixmapItem(QPixmap(imagePath).scaled(squareSize/2, squareSize/2));
+                capturedPieceItem->setFlag(QGraphicsItem::ItemIsMovable, false);
+                scene->addItem(capturedPieceItem);
+                if (capturedPiece->getColor() == "white")
+                    whiteDeadPieces.append(capturedPieceItem);
+                else
+                    blackDeadPieces.append(capturedPieceItem);
+
+                // Display captured white pieces on the top left and black pieces on the top right
+                if (capturedPiece->getColor() == "white") {
+                    capturedPieceItem->setPos(QPointF((whiteDeadPieces.length() % 4 - 4) * squareSize, (-1 + whiteDeadPieces.length() / 4) * squareSize));
+                }
+                else {
+                    capturedPieceItem->setPos(QPointF((boardSize + blackDeadPieces.length() % 4) * squareSize, (-1 + blackDeadPieces.length() / 4) * squareSize));
+                }
+            }
+        }
+    }
 }
 
 void Board::drawBoard() {
@@ -624,6 +719,7 @@ void Board::clearBoard() {
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
             pieceMap[row][col] = nullptr;
+            previousPieceMap[row][col] = nullptr;
         }
     }
 
@@ -642,6 +738,9 @@ void Board::clearBoard() {
     QBrush brush(brushColor);
     text->setDefaultTextColor(brush.color());
     scene->addItem(text);
+
+    whiteDeadPieces.clear();
+    blackDeadPieces.clear();
 }
 
 

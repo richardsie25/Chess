@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
 * Display dead piece/ count material
 * En passant
 * Pawn Promotion choose pieces
+* Draw conditions
 * 
 * QTimer timer;
     QObject::connect(&timer, &QTimer::timeout, [&]() {
