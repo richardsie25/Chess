@@ -1,7 +1,7 @@
 #include "Pawn.h"
 
 Pawn::Pawn(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePath(color)).scaled(squareSize, squareSize), parent) {
-
+    enPassant = false;
 }
 
 QString Pawn::imagePath(QString color) {

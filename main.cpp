@@ -12,7 +12,6 @@ int main(int argc, char* argv[]) {
 
 /* Things to Implement
 * En passant
-* Pawn Promotion choose pieces
 * Draw conditions
 * Flip Board
 * Timer

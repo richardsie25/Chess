@@ -6,8 +6,6 @@
 #include "Rook.h"
 #include "Queen.h"
 #include "King.h"
-#include <QGridLayout>
-#include <QPushButton>
 
 Board::Board(QGraphicsScene* scene){
     this->scene = scene;
@@ -371,7 +369,6 @@ void Board::handlePromotions(int destCol, int destRow, Piece* piece) {
         QDialog promotionDialog;
         promotionDialog.setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint | Qt::Popup);
         promotionDialog.setModal(true);
-        promotionDialog.setWindowTitle("Pawn Promotion");
         QGridLayout layout(&promotionDialog);
 
         QStringList pieceTypes = { "Queen", "Rook", "Bishop", "Knight" };

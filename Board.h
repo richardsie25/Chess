@@ -1,6 +1,8 @@
 #include <QGraphicsScene>
 #include <QTimer>
 #include <QMessageBox>
+#include <QGridLayout>
+#include <QPushButton>
 #include "Piece.h"
 
 class Board : public QObject
