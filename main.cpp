@@ -11,10 +11,12 @@ int main(int argc, char* argv[]) {
 }
 
 /* Things to Implement
-* Display dead piece/ count material
+* Count material
 * En passant
 * Pawn Promotion choose pieces
 * Draw conditions
+* Flip Board
+* Timer
 * 
 * QTimer timer;
     QObject::connect(&timer, &QTimer::timeout, [&]() {

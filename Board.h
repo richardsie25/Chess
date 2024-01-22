@@ -38,11 +38,12 @@ private:
     QGraphicsScene* scene;
     Piece* pieceMap[boardSize][boardSize];
     Piece* previousPieceMap[boardSize][boardSize];
-    QList <QGraphicsPixmapItem*> whiteDeadPieces;
-    QList <QGraphicsPixmapItem*> blackDeadPieces;
+    QList<QPair<int, QGraphicsPixmapItem*>> whiteDeadPieces;
+    QList<QPair<int, QGraphicsPixmapItem*>> blackDeadPieces;
     QGraphicsRectItem* currentHighlight = nullptr;
     QGraphicsRectItem* destHighlight = nullptr;
     QString playerTurn = "white";
     QString gameState = "";
-    QGraphicsTextItem* text = nullptr;
+    QGraphicsTextItem* turn = nullptr;
+    QGraphicsTextItem* materialScore = nullptr;
 };

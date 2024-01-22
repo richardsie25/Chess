@@ -57,6 +57,7 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
         if (dynamic_cast<Pawn*>(piece)) {
             if ((piece->getColor() == "white" && destRow == 0) || (piece->getColor() == "black" && destRow == 7)) {
                 Queen* promotedQueen = new Queen(piece->getColor());
+                promotedQueen->wasPawn = true;
                 promotedQueen->setPosition(QPointF(destCol * squareSize, destRow * squareSize));
                 scene->addItem(promotedQueen);
                 pieceMap[destRow][destCol] = promotedQueen;
@@ -67,6 +68,9 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
                     });
             }
         }
+
+        //Display Dead Material
+        displayDeadMaterial();
 
         //Switch Player Turn
         if (playerTurn == "white") {
@@ -391,8 +395,9 @@ void Board::processEvents() {
             gameState = "Draw!";
         }
     }
+
     //Change Text
-    scene->removeItem(text);
+    scene->removeItem(turn);
 
     QString message;
     if (playerTurn == "white")
@@ -402,23 +407,17 @@ void Board::processEvents() {
     if (gameState != "")
         message = gameState;
 
-    text = new QGraphicsTextItem(message);
+    turn = new QGraphicsTextItem(message);
     QFont font("Times", squareSize / 2, QFont::Bold);
-    text->setFont(font);
-    text->setPos(squareSize * 2, -squareSize);
-
-    QColor brushColor = QColor(118, 150, 86, 255);
-    QBrush brush(brushColor);
-    text->setDefaultTextColor(brush.color());
-    scene->addItem(text);
-
-    //Display Dead Material
-    displayDeadMaterial();
+    turn->setFont(font);
+    turn->setPos(squareSize * 2, -squareSize);
+    turn->setDefaultTextColor(QColor(118, 150, 86, 255));
+    scene->addItem(turn);
 
     if (!gameState.isEmpty()) {
         QMessageBox::StandardButton reply = QMessageBox::question(nullptr, "Game Over!", gameState + "\nWould you like to play again?", QMessageBox::Yes | QMessageBox::No);
         if (reply == QMessageBox::Yes) {
-            scene->removeItem(text);
+            scene->removeItem(turn);
             resetDefaultBoard();
         }
     }
@@ -463,6 +462,8 @@ int Board::materialCounter() {
                     score = 3;
                 else if (dynamic_cast<Pawn*>(pieceMap[row][col]))
                     score = 1;
+                else if (dynamic_cast<King*>(pieceMap[row][col]))
+                    score = 0;
 
                 if (pieceMap[row][col]->getColor() == "white")
                     whiteTotalScore += score;
@@ -475,11 +476,6 @@ int Board::materialCounter() {
 }
 
 void Board::displayDeadMaterial() {
-    int whiteRow = 0;
-    int whiteCol = 0;
-    int blackRow = 0;
-    int blackCol = 0;
-
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
             if (previousPieceMap[row][col] != nullptr && pieceMap[row][col] != nullptr && previousPieceMap[row][col]->getColor() != pieceMap[row][col]->getColor()) {
@@ -487,32 +483,76 @@ void Board::displayDeadMaterial() {
                 // A piece was captured
                 Piece* capturedPiece = previousPieceMap[row][col];
                 QString imagePath = capturedPiece->getColor();
-                if (dynamic_cast<Queen*>(capturedPiece))
+                int materialValue = 0;
+                if (dynamic_cast<Queen*>(capturedPiece) && !dynamic_cast<Queen*>(capturedPiece)->wasPawn) {
                     imagePath += "Queen.png";
-                else if (dynamic_cast<Bishop*>(capturedPiece))
+                    materialValue = 9;
+                }
+                else if (dynamic_cast<Bishop*>(capturedPiece) && !dynamic_cast<Bishop*>(capturedPiece)->wasPawn) {
                     imagePath += "Bishop.png";
-                else if (dynamic_cast<Knight*>(capturedPiece))
+                    materialValue = 4;
+                }
+                else if (dynamic_cast<Knight*>(capturedPiece) && !dynamic_cast<Knight*>(capturedPiece)->wasPawn) {
                     imagePath += "Knight.png";
-                else if (dynamic_cast<Rook*>(capturedPiece))
+                    materialValue = 3;
+                }
+                else if (dynamic_cast<Rook*>(capturedPiece) && !dynamic_cast<Rook*>(capturedPiece)->wasPawn) {
                     imagePath += "Rook.png";
-                else if (dynamic_cast<Pawn*>(capturedPiece))
-                    imagePath += "Pawn.png";
-
-                QGraphicsPixmapItem* capturedPieceItem = new QGraphicsPixmapItem(QPixmap(imagePath).scaled(squareSize/2, squareSize/2));
-                capturedPieceItem->setFlag(QGraphicsItem::ItemIsMovable, false);
-                scene->addItem(capturedPieceItem);
-                if (capturedPiece->getColor() == "white")
-                    whiteDeadPieces.append(capturedPieceItem);
-                else
-                    blackDeadPieces.append(capturedPieceItem);
-
-                // Display captured white pieces on the top left and black pieces on the top right
-                if (capturedPiece->getColor() == "white") {
-                    capturedPieceItem->setPos(QPointF((whiteDeadPieces.length() % 4 - 4) * squareSize, (-1 + whiteDeadPieces.length() / 4) * squareSize));
+                    materialValue = 5;
                 }
                 else {
-                    capturedPieceItem->setPos(QPointF((boardSize + blackDeadPieces.length() % 4) * squareSize, (-1 + blackDeadPieces.length() / 4) * squareSize));
+                    imagePath += "Pawn.png";
+                    materialValue = 1;
                 }
+
+                //Create Dead piece
+                QGraphicsPixmapItem* capturedPieceItem = new QGraphicsPixmapItem(QPixmap(imagePath).scaled(squareSize/2, squareSize/2));
+                capturedPieceItem->setFlag(QGraphicsItem::ItemIsMovable, false);
+
+                for (int i = 0; i < whiteDeadPieces.length(); i++) {
+                    QGraphicsPixmapItem* item = whiteDeadPieces[i].second;
+                    scene->removeItem(item);
+                }
+                for (int i = 0; i < blackDeadPieces.length(); i++) {
+                    QGraphicsPixmapItem* item = blackDeadPieces[i].second;
+                    scene->removeItem(item);
+                }
+
+                //Add to dead list
+                if (capturedPiece->getColor() == "white")
+                    whiteDeadPieces.append(qMakePair(materialValue,capturedPieceItem));
+                else
+                    blackDeadPieces.append(qMakePair(materialValue,capturedPieceItem));
+
+                std::sort(whiteDeadPieces.begin(), whiteDeadPieces.end());
+                std::sort(blackDeadPieces.begin(), blackDeadPieces.end());
+                
+                // Display the captured white pieces on the top left and black pieces on the top right
+                for (int i = 0; i < whiteDeadPieces.length(); i++) {
+                    QGraphicsPixmapItem* item = whiteDeadPieces[whiteDeadPieces.length() - i - 1].second;
+                    item->setPos(QPointF(((i % 5) - 7) * squareSize / 2, (i / 5) * squareSize / 2));
+                    scene->addItem(item);
+                }
+                for (int i = 0; i < blackDeadPieces.length(); i++) {
+                    QGraphicsPixmapItem* item = blackDeadPieces[blackDeadPieces.length() - i - 1].second;
+                    item->setPos(QPointF((boardSize * 2 + (i % 5) + 1) * squareSize / 2, (i / 5) * squareSize / 2));
+                    scene->addItem(item);
+                }
+
+                //Material Display
+                scene->removeItem(materialScore);
+                int materialAdvantage = materialCounter();
+                materialScore = new QGraphicsTextItem(QString("+%1").arg(qAbs(materialAdvantage)));
+                QFont font("Times", squareSize / 4, QFont::Bold);
+                materialScore->setFont(font);
+                materialScore->setDefaultTextColor(Qt::black);
+
+                if (materialAdvantage != 0)
+                    scene->addItem(materialScore);
+                if (materialAdvantage < 0)
+                    materialScore->setPos(QPointF(((whiteDeadPieces.length() - 1) % 5 - 6) * squareSize / 2, (-1 + whiteDeadPieces.length()) / 5 * squareSize / 2));
+                else if (materialAdvantage > 0)
+                    materialScore->setPos(QPointF((boardSize * 2 + (-1 + blackDeadPieces.length()) % 5 + 2) * squareSize / 2, (-1 + blackDeadPieces.length()) / 5 * squareSize / 2));
             }
         }
     }
@@ -535,8 +575,7 @@ void Board::drawBoard() {
 
                 //Font Color
                 QColor brushColor = ((row + col) % 2 == 1) ? QColor(238, 238, 210, 255) : QColor(118, 150, 86, 255);
-                QBrush brush(brushColor);
-                textItem->setDefaultTextColor(brush.color());
+                textItem->setDefaultTextColor(brushColor);
 
                 textItem->setPlainText(QString("%1").arg(boardSize - row));
                 qreal x = col * squareSize - 3;
@@ -553,8 +592,7 @@ void Board::drawBoard() {
 
                 //Font Color
                 QColor brushColor = ((row + col) % 2 == 1) ? QColor(238, 238, 210, 255) : QColor(118, 150, 86, 255);
-                QBrush brush(brushColor);
-                textItem->setDefaultTextColor(brush.color());
+                textItem->setDefaultTextColor(brushColor);
 
                 textItem->setPlainText(QString("%1").arg(QChar('a' + col)));
                 qreal x = (col + 1) * squareSize - textItem->boundingRect().width() + 3;  
@@ -709,7 +747,7 @@ void Board::placeBlack() {
 
 void Board::clearBoard() {
     for (QGraphicsItem* item : scene->items()) {
-        if (dynamic_cast<Piece*>(item)) {
+        if (dynamic_cast<QGraphicsPixmapItem*>(item)) {
             QTimer::singleShot(0, [this, item]() {
                 scene->removeItem(item);
                 delete item;
@@ -725,22 +763,22 @@ void Board::clearBoard() {
 
     scene->removeItem(currentHighlight);
     scene->removeItem(destHighlight);
+    scene->removeItem(materialScore);
     currentHighlight = nullptr;
     destHighlight = nullptr;
     playerTurn = "white";
     gameState = "";
-    text = new QGraphicsTextItem("White Turn!");
-    QFont font("Times", squareSize / 2, QFont::Bold);
-    text->setFont(font);
-    text->setPos(squareSize * 2, -squareSize);
-
-    QColor brushColor = QColor(118, 150, 86, 255);
-    QBrush brush(brushColor);
-    text->setDefaultTextColor(brush.color());
-    scene->addItem(text);
-
     whiteDeadPieces.clear();
     blackDeadPieces.clear();
+
+    turn = new QGraphicsTextItem("White Turn!");
+    QFont font("Times", squareSize / 2, QFont::Bold);
+    turn->setFont(font);
+    turn->setPos(squareSize * 2, -squareSize);
+
+    QColor brushColor = QColor(118, 150, 86, 255);
+    turn->setDefaultTextColor(brushColor);
+    scene->addItem(turn);
 }
 
 

@@ -1,6 +1,6 @@
 #include "Queen.h"
 Queen::Queen(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePath(color)).scaled(squareSize, squareSize), parent) {
-
+    wasPawn = false;
 }
 
 QString Queen::imagePath(QString color){

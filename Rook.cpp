@@ -1,6 +1,7 @@
 #include "Rook.h"
 Rook::Rook(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePath(color)).scaled(squareSize, squareSize), parent) {
     hasMoved = false;
+    wasPawn = false;
 }
 
 QString Rook::imagePath(QString color) {

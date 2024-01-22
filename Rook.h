@@ -7,5 +7,6 @@ public:
 	QString imagePath(QString color);
 	bool isValidMove(int destCol, int destRow);
 	bool hasMoved;
+	bool wasPawn;
 };
 

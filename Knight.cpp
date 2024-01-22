@@ -1,6 +1,6 @@
 #include "Knight.h"
 Knight::Knight(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePath(color)).scaled(squareSize, squareSize), parent) {
-
+    wasPawn = false;
 }
 
 QString Knight::imagePath(QString color) {
