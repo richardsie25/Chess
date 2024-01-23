@@ -32,6 +32,8 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
     
     if (piece->getColor() == playerTurn && !isKinginCheck(destCol, destRow, piece) && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && !isTeam(destCol,destRow, piece)) {
 
+        
+
         //Copy PieceMap
         copyPieceMap();
 
@@ -150,13 +152,20 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
         if (piece->getColor() == "white") {
             if (destCol == currentCol) {
                 if (destRow == currentRow - 2) {
+                    if (pieceMap[destRow][destCol] == nullptr && pieceMap[destRow + 1][destCol] == nullptr)
+                        dynamic_cast<Pawn*>(piece)->enPassant = true;
                     return pieceMap[destRow][destCol] != nullptr || pieceMap[destRow + 1][destCol] != nullptr;
                 }
                 else if (destRow == currentRow - 1) {
                     return pieceMap[destRow][destCol] != nullptr;
                 }
             }
-            if (qAbs(destCol - currentCol) == 1 && destRow == currentRow - 1) {
+            else if (qAbs(destCol - currentCol) == 1 && destRow == currentRow - 1) {
+                if (pieceMap[destRow][destCol] == nullptr && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])
+                    && pieceMap[currentRow][destCol]->getColor() == "black" && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])->enPassant) {
+                    captures(destCol, currentRow);
+                    return false;
+                }
                 return pieceMap[destRow][destCol] == nullptr;
             }
         }
@@ -164,13 +173,20 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
         else {
             if (destCol == currentCol) {
                 if (destRow == currentRow + 2) {
+                    if (pieceMap[destRow][destCol] == nullptr && pieceMap[destRow - 1][destCol] == nullptr)
+                        dynamic_cast<Pawn*>(piece)->enPassant = true;
                     return pieceMap[destRow][destCol] != nullptr || pieceMap[destRow - 1][destCol] != nullptr;
                 }
                 else if (destRow == currentRow + 1) {
                     return pieceMap[destRow][destCol] != nullptr;
                 }
             }
-            if (qAbs(destCol - currentCol) == 1 && destRow == currentRow + 1) {
+            else if (qAbs(destCol - currentCol) == 1 && destRow == currentRow + 1) {
+                if (pieceMap[destRow][destCol] == nullptr && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])
+                    && pieceMap[currentRow][destCol]->getColor() == "white" && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])->enPassant) {
+                    captures(destCol, currentRow);
+                    return false;
+                }
                 return pieceMap[destRow][destCol] == nullptr;
             }
         }
