@@ -30,7 +30,7 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
     int currentCol = piece->getPosition().x() / squareSize;
     int currentRow = piece->getPosition().y() / squareSize;
     
-    if (piece->getColor() == playerTurn && !isKinginCheck(destCol, destRow, piece) && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && !isTeam(destCol,destRow, piece)) {
+    if (piece->getColor() == playerTurn && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && !isTeam(destCol,destRow, piece) && !isKinginCheck(destCol, destRow, piece)) {
 
         
 
@@ -152,8 +152,6 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
         if (piece->getColor() == "white") {
             if (destCol == currentCol) {
                 if (destRow == currentRow - 2) {
-                    if (pieceMap[destRow][destCol] == nullptr && pieceMap[destRow + 1][destCol] == nullptr)
-                        dynamic_cast<Pawn*>(piece)->enPassant = true;
                     return pieceMap[destRow][destCol] != nullptr || pieceMap[destRow + 1][destCol] != nullptr;
                 }
                 else if (destRow == currentRow - 1) {
@@ -161,11 +159,6 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
                 }
             }
             else if (qAbs(destCol - currentCol) == 1 && destRow == currentRow - 1) {
-                if (pieceMap[destRow][destCol] == nullptr && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])
-                    && pieceMap[currentRow][destCol]->getColor() == "black" && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])->enPassant) {
-                    captures(destCol, currentRow);
-                    return false;
-                }
                 return pieceMap[destRow][destCol] == nullptr;
             }
         }
@@ -173,8 +166,6 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
         else {
             if (destCol == currentCol) {
                 if (destRow == currentRow + 2) {
-                    if (pieceMap[destRow][destCol] == nullptr && pieceMap[destRow - 1][destCol] == nullptr)
-                        dynamic_cast<Pawn*>(piece)->enPassant = true;
                     return pieceMap[destRow][destCol] != nullptr || pieceMap[destRow - 1][destCol] != nullptr;
                 }
                 else if (destRow == currentRow + 1) {
@@ -182,11 +173,6 @@ bool Board::collisionCheck(int destCol, int destRow, Piece* piece) {
                 }
             }
             else if (qAbs(destCol - currentCol) == 1 && destRow == currentRow + 1) {
-                if (pieceMap[destRow][destCol] == nullptr && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])
-                    && pieceMap[currentRow][destCol]->getColor() == "white" && dynamic_cast<Pawn*>(pieceMap[currentRow][destCol])->enPassant) {
-                    captures(destCol, currentRow);
-                    return false;
-                }
                 return pieceMap[destRow][destCol] == nullptr;
             }
         }
@@ -401,6 +387,12 @@ void Board::handlePromotions(int destCol, int destRow, Piece* piece) {
                 });
         }
 
+        //Center Promotion Dialog
+        QGraphicsView* view = scene->views().first();
+        QPointF sceneCenter = scene->sceneRect().center();
+        QPoint viewCenter = view->mapToGlobal(view->mapFromScene(sceneCenter));
+        promotionDialog.move(viewCenter.x() - 0.55 * squareSize, viewCenter.y() - 1.95 * squareSize);
+
         promotionDialog.exec();
     }
 }
@@ -614,7 +606,7 @@ void Board::displayDeadMaterial() {
                 materialScore = new QGraphicsTextItem(QString("+%1").arg(qAbs(materialAdvantage)));
                 QFont font("Times", squareSize / 4, QFont::Bold);
                 materialScore->setFont(font);
-                materialScore->setDefaultTextColor(Qt::black);
+                materialScore->setDefaultTextColor(Qt::white);
 
                 if (materialAdvantage != 0)
                     scene->addItem(materialScore);

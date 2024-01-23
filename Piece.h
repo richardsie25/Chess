@@ -1,5 +1,7 @@
 #pragma once
 #include "Game.h"
+#include <QGraphicsSceneMouseEvent>
+#include <QGraphicsItem>
 
 class Piece : public QObject, public QGraphicsPixmapItem
 {

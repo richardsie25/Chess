@@ -1,8 +1,7 @@
 #pragma once
-#include <QtWidgets/QMainWindow>
-#include <QGraphicsItem>
-#include <QGraphicsSceneMouseEvent>
 #include <QGraphicsView>
+#include <QGuiApplication>
+#include <QScreen>
 #include "ui_Game.h"
 
 const int boardSize = 8;
