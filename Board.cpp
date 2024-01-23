@@ -1,5 +1,4 @@
 #include "Board.h"
-#include "Piece.h"
 #include "Pawn.h"
 #include "Bishop.h"
 #include "Knight.h"
@@ -56,14 +55,14 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
         //Pawn Promotion Check
         handlePromotions(destCol, destRow, piece);
 
-        //Display Dead Material
-        displayDeadMaterial();
-
         //Switch Player Turn
         if (playerTurn == "white") 
             playerTurn = "black";
         else 
             playerTurn = "white";
+
+        //Display Dead Material
+        displayDeadMaterial();
 
     }
     else {
@@ -367,6 +366,7 @@ bool Board::isCheckmate(QString kingColor) {
 void Board::handlePromotions(int destCol, int destRow, Piece* piece) {
     if (dynamic_cast<Pawn*>(piece) && ((piece->getColor() == "white" && destRow == 0) || (piece->getColor() == "black" && destRow == 7))) {
         QDialog promotionDialog;
+        promotionDialog.setWindowOpacity(0.8);
         promotionDialog.setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint | Qt::Popup);
         promotionDialog.setModal(true);
         QGridLayout layout(&promotionDialog);
@@ -376,7 +376,7 @@ void Board::handlePromotions(int destCol, int destRow, Piece* piece) {
             QPushButton* button = new QPushButton();
             QIcon pieceIcon(piece->getColor() + type + ".png");
             button->setIcon(pieceIcon);
-            button->setIconSize(QSize(64, 64));
+            button->setIconSize(QSize(squareSize * 0.8, squareSize * 0.8));
             layout.addWidget(button);
 
             connect(button, &QPushButton::clicked, [&promotionDialog, this, destCol, destRow, piece, type]() {
@@ -531,7 +531,7 @@ int Board::materialCounter() {
 void Board::displayDeadMaterial() {
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
-            if (previousPieceMap[row][col] != nullptr && pieceMap[row][col] != nullptr && previousPieceMap[row][col]->getColor() != pieceMap[row][col]->getColor()) {
+            if (previousPieceMap[row][col] != nullptr && previousPieceMap[row][col]->getColor() == playerTurn && (pieceMap[row][col] == nullptr || pieceMap[row][col]->getColor()!= playerTurn)) {
 
                 // A piece was captured
                 Piece* capturedPiece = previousPieceMap[row][col];

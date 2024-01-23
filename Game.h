@@ -18,5 +18,4 @@ public:
 
 private:
     Ui::GameClass ui;
-    QGraphicsScene* scene;
 };
