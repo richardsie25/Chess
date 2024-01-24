@@ -32,8 +32,6 @@ void Board::onPieceReleased(Piece* piece, QPointF releasePos) {
     
     if (piece->getColor() == playerTurn && isValidPos(releasePos.x(), releasePos.y()) && piece->isValidMove(destCol, destRow) && !collisionCheck(destCol, destRow, piece) && !isTeam(destCol,destRow, piece) && !isKinginCheck(destCol, destRow, piece)) {
 
-        
-
         //Copy PieceMap
         copyPieceMap();
 
@@ -842,5 +840,72 @@ void Board::clearBoard() {
     scene->addItem(turn);
 }
 
+void Board::displayBoard(char boardState[boardSize][boardSize]) {
+    for (QGraphicsItem* item : scene->items()) {
+        if (dynamic_cast<QGraphicsPixmapItem*>(item)) {
+            QTimer::singleShot(0, [this, item]() {
+                scene->removeItem(item);
+                delete item;
+                });
+        }
+    }
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+            pieceMap[row][col] = nullptr;
+        }
+    }
+    copyPieceMap();
+    highlightSquares();
+    for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
 
+            Piece* piece = nullptr;
+            switch (boardState[row][col]) {
+            case 'P':
+                piece = new Pawn("white");
+                break;
+            case 'p':
+                piece = new Pawn("black");
+                break;
+            case 'R':
+                piece = new Rook("white");
+                break;
+            case 'r':
+                piece = new Rook("black");
+                break;
+            case 'N':
+                piece = new Knight("white");
+                break;
+            case 'n':
+                piece = new Knight("black");
+                break;
+            case 'B':
+                piece = new Bishop("white");
+                break;
+            case 'b':
+                piece = new Bishop("black");
+                break;
+            case 'Q':
+                piece = new Queen("white");
+                break;
+            case 'q':
+                piece = new Queen("black");
+                break;
+            case 'K':
+                piece = new King("white");
+                break;
+            case 'k':
+                piece = new King("black");
+                break;
+            }
+            if (piece) {
+                piece->setPosition(QPointF(col * squareSize, row * squareSize));
+                scene->addItem(piece);
+                pieceMap[row][col] = piece;
+                connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
+                connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
+            }
+        }
+    }
+}
 

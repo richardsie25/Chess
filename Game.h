@@ -2,10 +2,11 @@
 #include <QGraphicsView>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QKeyEvent>
 #include "ui_Game.h"
 
 const int boardSize = 8;
-const int squareSize = 100;
+const int squareSize = 70;
 
 class Game : public QGraphicsView
 {
@@ -14,6 +15,7 @@ class Game : public QGraphicsView
 public:
     Game(QWidget* parent = nullptr);
     ~Game();
+    void keyPressEvent(QKeyEvent* event);
 
 private:
     Ui::GameClass ui;
