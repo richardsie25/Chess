@@ -488,11 +488,11 @@ void Board::highlightSquares(){
     QPointF pieceOriginalPos, pieceDestPos;
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
-            if (previousPieceMap[row][col] != pieceMap[row][col] && pieceMap[row][col] == nullptr) {
+            if (previousPieceMap[row][col] != nullptr && pieceMap[row][col] == nullptr) {
                 pieceOriginalPos.setX(col * squareSize);
                 pieceOriginalPos.setY(row * squareSize);
             }
-            else if (previousPieceMap[row][col] != pieceMap[row][col]) {
+            else if ((previousPieceMap[row][col] == nullptr && pieceMap[row][col] != nullptr)|| (pieceMap[row][col] != nullptr && pieceMap[row][col]->getColor()!=previousPieceMap[row][col]->getColor())) {
                 pieceDestPos.setX(col * squareSize);
                 pieceDestPos.setY(row * squareSize);
             }
@@ -841,8 +841,9 @@ void Board::clearBoard() {
 }
 
 void Board::displayBoard(char boardState[boardSize][boardSize]) {
+    copyPieceMap();
     for (QGraphicsItem* item : scene->items()) {
-        if (dynamic_cast<QGraphicsPixmapItem*>(item)) {
+        if (dynamic_cast<Piece*>(item)) {
             QTimer::singleShot(0, [this, item]() {
                 scene->removeItem(item);
                 delete item;
@@ -854,8 +855,7 @@ void Board::displayBoard(char boardState[boardSize][boardSize]) {
             pieceMap[row][col] = nullptr;
         }
     }
-    copyPieceMap();
-    highlightSquares();
+
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
 
@@ -907,5 +907,16 @@ void Board::displayBoard(char boardState[boardSize][boardSize]) {
             }
         }
     }
+    highlightSquares();
+
+    //Switch Player Turn
+    if (playerTurn == "white")
+        playerTurn = "black";
+    else
+        playerTurn = "white";
+
+    displayDeadMaterial();
+
+    processEvents();
 }
 

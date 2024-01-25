@@ -14,7 +14,7 @@ Game::Game(QWidget *parent) : QGraphicsView(parent) {
 
     board = new Board(scene);
     board->drawBoard();
-    //board->resetDefaultBoard();
+    board->resetDefaultBoard();
 }
 
 Game::~Game() {
@@ -23,29 +23,63 @@ Game::~Game() {
 
 void Game::keyPressEvent(QKeyEvent* event) {
     
-    char boardState[8][8] = {
-    {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-    {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-    {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
-    };
     switch (event->key()) {
-    case Qt::Key_Left:
+    case Qt::Key_Left: {
+        char boardState[8][8] = {
+        {'r', 'n', 'b', ' ', 'k', 'b', 'n', 'r'},
+        {'p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'q', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'},
+        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+        };
         board->displayBoard(boardState);
         break;
-    case Qt::Key_Right:
-        boardState[1][0] = ' ';
-        boardState[3][0] = 'p';
+    }
+    case Qt::Key_Right: {
+        char boardState[8][8] = {
+        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+        {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'P', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'},
+        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+        };
         board->displayBoard(boardState);
         break;
-    case Qt::Key_Up:
+    }
+    case Qt::Key_Up: {
+        char boardState[8][8] = {
+        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+        {'p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'p', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'P', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'},
+        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+        };
+        board->displayBoard(boardState);
         break;
-    case Qt::Key_Down:
+    }
+    case Qt::Key_Down: {
+        char boardState[8][8] = {
+        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+        {'p', 'p', 'p', ' ', 'p', 'p', 'p', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'P', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'P', 'P', 'P', 'P', ' ', 'P', 'P', 'P'},
+        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
+        };
+        board->displayBoard(boardState);
         break;
+    }
     default:
         QGraphicsView::keyPressEvent(event);
     }
