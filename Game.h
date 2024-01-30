@@ -2,7 +2,8 @@
 #include <QGraphicsView>
 #include <QGuiApplication>
 #include <QScreen>
-#include <QKeyEvent>
+#include <QTcpSocket>
+#define PORT 8080
 #include "ui_Game.h"
 
 const int boardSize = 8;
@@ -15,8 +16,12 @@ class Game : public QGraphicsView
 public:
     Game(QWidget* parent = nullptr);
     ~Game();
-    void keyPressEvent(QKeyEvent* event);
 
 private:
+    QTcpSocket* socket;
     Ui::GameClass ui;
+
+private slots:
+    void readData();
+    void handleSocketError(QAbstractSocket::SocketError socketError);
 };

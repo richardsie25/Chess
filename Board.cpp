@@ -840,8 +840,9 @@ void Board::clearBoard() {
     scene->addItem(turn);
 }
 
-void Board::displayBoard(char boardState[boardSize][boardSize]) {
+void Board::displayBoard(std::string fen) {
     copyPieceMap();
+
     for (QGraphicsItem* item : scene->items()) {
         if (dynamic_cast<Piece*>(item)) {
             QTimer::singleShot(0, [this, item]() {
@@ -856,11 +857,18 @@ void Board::displayBoard(char boardState[boardSize][boardSize]) {
         }
     }
 
-    for (int row = 0; row < boardSize; row++) {
-        for (int col = 0; col < boardSize; col++) {
-
+    int row = 0, col = 0;
+    for (char c : fen) {
+        if (c == '/') {
+            row++;
+            col = 0;
+        }
+        else if (isdigit(c)) {
+            col += c - '0';
+        }
+        else {
             Piece* piece = nullptr;
-            switch (boardState[row][col]) {
+            switch (c) {
             case 'P':
                 piece = new Pawn("white");
                 break;
@@ -905,8 +913,10 @@ void Board::displayBoard(char boardState[boardSize][boardSize]) {
                 connect(piece, &Piece::piecePressed, this, &Board::onPiecePressed);
                 connect(piece, &Piece::pieceReleased, this, &Board::onPieceReleased);
             }
+            col++;
         }
     }
+
     highlightSquares();
 
     //Switch Player Turn

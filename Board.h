@@ -33,7 +33,7 @@ public:
     void placeWhite();
     void placeBlack();
     void clearBoard();
-    void displayBoard(char boardState[boardSize][boardSize]);
+    void displayBoard(std::string fen);
 
 public slots:
     bool onPiecePressed(Piece* piece);
