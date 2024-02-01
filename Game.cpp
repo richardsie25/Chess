@@ -14,6 +14,7 @@ Game::Game(QWidget *parent) : QGraphicsView(parent) {
 
     board = new Board(scene);
     board->drawBoard();
+    board->resetDefaultBoard();
 
     socket = new QTcpSocket(this);
     connect(socket, &QTcpSocket::readyRead, this, &Game::readData);
@@ -52,68 +53,128 @@ void Game::handleSocketError(QAbstractSocket::SocketError socketError) {
 
 /*
 import socket
-import threading
-import keyboard
-import time
 
-HOST = '127.0.0.1'
-PORT = 8080
+HOST = '127.0.0.1'  # Standard loopback interface (localhost)
+PORT = 8080        # Port to listen on (non-privileged ports are > 1023)
 
+def send_line_to_client(conn, file):
+    with open(file, 'r') as f:
+        for line in f:
+            input("Press Enter to send the next line...")
+            conn.sendall(line.encode())
 
-def handle_client_connection(conn, addr):
-    print(f"Connected by {addr}")
-
-    while True:
-        data = conn.recv(1024)
-        if not data:
-            break
-
-    print(f"Connection to {addr} closed")
-
-
-def listen_for_keypress(conn):
-    key_pressed = {'up': False, 'down': False, 'left': False, 'right': False}
-
-    while True:
-        if keyboard.is_pressed('up') and not key_pressed['up']:
-            conn.sendall(b'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
-            key_pressed['up'] = True
-        elif not keyboard.is_pressed('up'):
-            key_pressed['up'] = False
-
-        if keyboard.is_pressed('down') and not key_pressed['down']:
-            conn.sendall(b'r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1')
-            key_pressed['down'] = True
-        elif not keyboard.is_pressed('down'):
-            key_pressed['down'] = False
-
-        if keyboard.is_pressed('left') and not key_pressed['left']:
-            conn.sendall(b'8/8/8/4p1K1/2k1P3/8/8/8')
-            key_pressed['left'] = True
-        elif not keyboard.is_pressed('left'):
-            key_pressed['left'] = False
-
-        if keyboard.is_pressed('right') and not key_pressed['right']:
-            conn.sendall(b'4k2r/6r1/8/8/8/8/3R4/R3K3')
-            key_pressed['right'] = True
-        elif not keyboard.is_pressed('right'):
-            key_pressed['right'] = False
-
-        time.sleep(0.1)
-
-
-def start_server(host, port):
+def start_server(host, port, file):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
         print(f"Server listening on {host}:{port}")
 
-        while True:
-            conn, addr = s.accept()
-            client_thread = threading.Thread(target=handle_client_connection, args=(conn, addr))
-            client_thread.start()
-            keyboard_thread = threading.Thread(target=listen_for_keypress, args=(conn,))
-            keyboard_thread.start()
+        conn, addr = s.accept()
+        with conn:
+            print(f"Connected by {addr}")
+            send_line_to_client(conn, file)
 
-start_server(HOST, PORT)
+start_server(HOST, PORT, 'fen.txt')
+
+
+
+rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR
+rnbqkbnr/p1pppppp/1p6/8/3P4/8/PPP1PPPP/RNBQKBNR
+rnbqkbnr/p1pppppp/1p6/8/2PP4/8/PP2PPPP/RNBQKBNR
+rn1qkbnr/pbpppppp/1p6/8/2PP4/8/PP2PPPP/RNBQKBNR
+rn1qkbnr/pbpppppp/1p6/8/2PP4/2N5/PP2PPPP/R1BQKBNR
+rn1qkbnr/pbpppp1p/1p4p1/8/2PP4/2N5/PP2PPPP/R1BQKBNR
+rn1qkbnr/pbpppp1p/1p4p1/8/2PP4/2N2N2/PP2PPPP/R1BQKB1R
+rn1qk1nr/pbppppbp/1p4p1/8/2PP4/2N2N2/PP2PPPP/R1BQKB1R
+rn1qk1nr/pbppppbp/1p4p1/8/2PP1B2/2N2N2/PP2PPPP/R2QKB1R
+rn1qk1nr/pbppppbp/6p1/1p6/2PP1B2/2N2N2/PP2PPPP/R2QKB1R
+rn1qk1nr/pbppppbp/6p1/1P6/3P1B2/2N2N2/PP2PPPP/R2QKB1R
+rn1qk1nr/pbppp1bp/5pp1/1P6/3P1B2/2N2N2/PP2PPPP/R2QKB1R
+rn1qk1nr/pbppp1bp/5pp1/1P6/3P1B2/2N1PN2/PP3PPP/R2QKB1R
+rn1qk1nr/pbpp2bp/5pp1/1P2p3/3P1B2/2N1PN2/PP3PPP/R2QKB1R
+rn1qk1nr/pbpp2bp/5pp1/1P2P3/5B2/2N1PN2/PP3PPP/R2QKB1R
+rn1qk1nr/pbpp2bp/6p1/1P2p3/5B2/2N1PN2/PP3PPP/R2QKB1R
+rn1qk1nr/pbpp2bp/6p1/1P2B3/8/2N1PN2/PP3PPP/R2QKB1R
+rn1qk1nr/pbpp3p/6p1/1P2b3/8/2N1PN2/PP3PPP/R2QKB1R
+rn1qk1nr/pbpp3p/6p1/1P2N3/8/2N1P3/PP3PPP/R2QKB1R
+rn2k1nr/pbpp3p/5qp1/1P2N3/8/2N1P3/PP3PPP/R2QKB1R
+rn2k1nr/pbpp3p/5qp1/1P6/8/2N1PN2/PP3PPP/R2QKB1R
+rn2k1nr/p1pp3p/5qp1/1P6/8/2N1Pb2/PP3PPP/R2QKB1R
+rn2k1nr/p1pp3p/5qp1/1P6/8/2N1PQ2/PP3PPP/R3KB1R
+rn2k1nr/p1pp3p/6p1/1P6/8/2N1Pq2/PP3PPP/R3KB1R
+rn2k1nr/p1pp3p/6p1/1P6/8/2N1PP2/PP3P1P/R3KB1R
+rn2k1nr/p1pp4/6pp/1P6/8/2N1PP2/PP3P1P/R3KB1R
+rn2k1nr/p1pp4/6pp/1P6/8/2N1PP2/PP3PBP/R3K2R
+rn2k1nr/2pp4/p5pp/1P6/8/2N1PP2/PP3PBP/R3K2R
+rn2k1nr/2pp4/p5pp/1P6/8/2N1PP2/PP3PBP/R4RK1
+rn2k2r/2ppn3/p5pp/1P6/8/2N1PP2/PP3PBP/R4RK1
+rn2k2r/2ppn3/P5pp/8/8/2N1PP2/PP3PBP/R4RK1
+rn2k2r/2p1n3/P5pp/3p4/8/2N1PP2/PP3PBP/R4RK1
+rn2k2r/2p1n3/P5pp/3p4/5P2/2N1P3/PP3PBP/R4RK1
+rn2k1r1/2p1n3/P5pp/3p4/5P2/2N1P3/PP3PBP/R4RK1
+rn2k1r1/2p1n3/P5pp/3N4/5P2/4P3/PP3PBP/R4RK1
+r3k1r1/2p1n3/n5pp/3N4/5P2/4P3/PP3PBP/R4RK1
+r3k1r1/2N1n3/n5pp/8/5P2/4P3/PP3PBP/R4RK1
+r3k1r1/2n1n3/6pp/8/5P2/4P3/PP3PBP/R4RK1
+B3k1r1/2n1n3/6pp/8/5P2/4P3/PP3P1P/R4RK1
+n3k1r1/4n3/6pp/8/5P2/4P3/PP3P1P/R4RK1
+n3k1r1/4n3/6pp/8/P4P2/4P3/1P3P1P/R4RK1
+n3k1r1/4n3/6p1/7p/P4P2/4P3/1P3P1P/R4RK1
+n3k1r1/4n3/6p1/P6p/5P2/4P3/1P3P1P/R4RK1
+n3k1r1/4n3/8/P5pp/5P2/4P3/1P3P1P/R4RK1
+n3k1r1/4n3/8/P5Pp/8/4P3/1P3P1P/R4RK1
+n3k3/4n3/8/P5rp/8/4P3/1P3P1P/R4RK1
+n3k3/4n3/8/P5rp/8/4P3/1P3P1P/R4R1K
+n3k3/4n3/8/Pr5p/8/4P3/1P3P1P/R4R1K
+n3k3/4n3/8/Pr5p/8/4P3/1P3P1P/RR5K
+n3k1n1/8/8/Pr5p/8/4P3/1P3P1P/RR5K
+n3k1n1/8/P7/1r5p/8/4P3/1P3P1P/RR5K
+n3k3/8/P4n2/1r5p/8/4P3/1P3P1P/RR5K
+n3k3/8/P4n2/1r5p/8/4P3/RP3P1P/1R5K
+n7/3k4/P4n2/1r5p/8/4P3/RP3P1P/1R5K
+n7/3k4/P4n2/1r5p/8/4P3/RP3P1P/R6K
+n7/8/P2k1n2/1r5p/8/4P3/RP3P1P/R6K
+n7/8/P2k1n2/Rr5p/8/4P3/1P3P1P/R6K
+n7/8/P2k1n2/r6p/8/4P3/1P3P1P/R6K
+n7/8/P2k1n2/R6p/8/4P3/1P3P1P/7K
+n7/8/P2k4/R6p/6n1/4P3/1P3P1P/7K
+n7/8/P2k4/R6p/6n1/4P3/1P3PKP/8
+n7/8/P2k4/R6p/8/4n3/1P3PKP/8
+n7/8/P2k4/R6p/8/4P3/1P4KP/8
+n7/8/P2k4/R7/7p/4P3/1P4KP/8
+n7/8/P2k4/7R/7p/4P3/1P4KP/8
+n7/8/P1k5/7R/7p/4P3/1P4KP/8
+n7/8/P1k5/8/7R/4P3/1P4KP/8
+8/2n5/P1k5/8/7R/4P3/1P4KP/8
+8/2n5/P1k4R/8/8/4P3/1P4KP/8
+8/2n5/P6R/1k6/8/4P3/1P4KP/8
+8/2n5/P6R/1k6/7P/4P3/1P4K1/8
+8/8/n6R/1k6/7P/4P3/1P4K1/8
+8/8/R7/1k6/7P/4P3/1P4K1/8
+8/8/k7/8/7P/4P3/1P4K1/8
+8/8/k7/7P/8/4P3/1P4K1/8
+8/1k6/8/7P/8/4P3/1P4K1/8
+8/1k6/7P/8/8/4P3/1P4K1/8
+8/8/2k4P/8/8/4P3/1P4K1/8
+8/7P/2k5/8/8/4P3/1P4K1/8
+8/7P/8/3k4/8/4P3/1P4K1/8
+7Q/8/8/3k4/8/4P3/1P4K1/8
+7Q/8/8/8/2k5/4P3/1P4K1/8
+8/8/8/8/2kQ4/4P3/1P4K1/8
+8/8/8/1k6/3Q4/4P3/1P4K1/8
+8/8/8/1k6/3Q4/1P2P3/6K1/8
+8/8/k7/8/3Q4/1P2P3/6K1/8
+8/8/k7/8/1Q6/1P2P3/6K1/8
+8/k7/8/8/1Q6/1P2P3/6K1/8
+8/k7/8/1Q6/8/1P2P3/6K1/8
+k7/8/8/1Q6/8/1P2P3/6K1/8
+k7/8/8/1Q6/8/1P2PK2/8/8
+8/k7/8/1Q6/8/1P2PK2/8/8
+8/k7/8/1Q6/4K3/1P2P3/8/8
+k7/8/8/1Q6/4K3/1P2P3/8/8
+k7/8/8/1Q1K4/8/1P2P3/8/8
+8/k7/8/1Q1K4/8/1P2P3/8/8
+8/k7/2K5/1Q6/8/1P2P3/8/8
+k7/8/2K5/1Q6/8/1P2P3/8/8
+k7/1Q6/2K5/8/8/1P2P3/8/8
 */
