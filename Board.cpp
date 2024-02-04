@@ -597,24 +597,23 @@ void Board::displayDeadMaterial() {
                     item->setPos(QPointF((boardSize * 2 + (i % 5) + 1) * squareSize / 2, (i / 5) * squareSize / 2));
                     scene->addItem(item);
                 }
-
-                //Material Display
-                scene->removeItem(materialScore);
-                int materialAdvantage = materialCounter();
-                materialScore = new QGraphicsTextItem(QString("+%1").arg(qAbs(materialAdvantage)));
-                QFont font("Times", squareSize / 4, QFont::Bold);
-                materialScore->setFont(font);
-                materialScore->setDefaultTextColor(Qt::white);
-
-                if (materialAdvantage != 0)
-                    scene->addItem(materialScore);
-                if (materialAdvantage < 0)
-                    materialScore->setPos(QPointF(((whiteDeadPieces.length() - 1) % 5 - 6) * squareSize / 2, (-1 + whiteDeadPieces.length()) / 5 * squareSize / 2));
-                else if (materialAdvantage > 0)
-                    materialScore->setPos(QPointF((boardSize * 2 + (-1 + blackDeadPieces.length()) % 5 + 2) * squareSize / 2, (-1 + blackDeadPieces.length()) / 5 * squareSize / 2));
             }
         }
     }
+    //Material Display
+    scene->removeItem(materialScore);
+    int materialAdvantage = materialCounter();
+    materialScore = new QGraphicsTextItem(QString("+%1").arg(qAbs(materialAdvantage)));
+    QFont font("Times", squareSize / 4, QFont::Bold);
+    materialScore->setFont(font);
+    materialScore->setDefaultTextColor(Qt::white);
+
+    if (materialAdvantage != 0)
+        scene->addItem(materialScore);
+    if (materialAdvantage < 0)
+        materialScore->setPos(QPointF(((whiteDeadPieces.length() - 1) % 5 - 6) * squareSize / 2, (-1 + whiteDeadPieces.length()) / 5 * squareSize / 2));
+    else if (materialAdvantage > 0)
+        materialScore->setPos(QPointF((boardSize * 2 + (-1 + blackDeadPieces.length()) % 5 + 2) * squareSize / 2, (-1 + blackDeadPieces.length()) / 5 * squareSize / 2));
 }
 
 void Board::drawBoard() {
