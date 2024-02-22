@@ -535,6 +535,7 @@ int Board::materialCounter() {
 }
 
 void Board::displayDeadMaterial() {
+    bool captures = false;
     for (int row = 0; row < boardSize; row++) {
         for (int col = 0; col < boardSize; col++) {
             if (previousPieceMap[row][col] != nullptr && previousPieceMap[row][col]->getColor() == playerTurn && (pieceMap[row][col] == nullptr || pieceMap[row][col]->getColor()!= playerTurn)) {
@@ -543,6 +544,7 @@ void Board::displayDeadMaterial() {
                 Piece* capturedPiece = previousPieceMap[row][col];
                 QString imagePath = capturedPiece->getColor();
                 int materialValue = 0;
+                captures = true;
                 if (dynamic_cast<Queen*>(capturedPiece) && !dynamic_cast<Queen*>(capturedPiece)->wasPawn) {
                     imagePath += "Queen.png";
                     materialValue = 9;
@@ -614,6 +616,16 @@ void Board::displayDeadMaterial() {
         materialScore->setPos(QPointF(((whiteDeadPieces.length() - 1) % 5 - 6) * squareSize / 2, (-1 + whiteDeadPieces.length()) / 5 * squareSize / 2));
     else if (materialAdvantage > 0)
         materialScore->setPos(QPointF((boardSize * 2 + (-1 + blackDeadPieces.length()) % 5 + 2) * squareSize / 2, (-1 + blackDeadPieces.length()) / 5 * squareSize / 2));
+
+    QMediaPlayer* player = new QMediaPlayer();
+    QAudioOutput* audio = new QAudioOutput(player);
+    player->setAudioOutput(audio);
+    if (captures)
+        player->setSource(QUrl("qrc:/Game/capture.mp3"));
+    else
+        player->setSource(QUrl("qrc:/Game/move-self.mp3"));
+    audio->setVolume(0.8);
+    player->play();
 }
 
 void Board::drawBoard() {

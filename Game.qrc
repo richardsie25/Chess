@@ -12,5 +12,7 @@
         <file>whitePawn.png</file>
         <file>whiteQueen.png</file>
         <file>whiteRook.png</file>
+        <file>move-self.mp3</file>
+        <file>capture.mp3</file>
     </qresource>
 </RCC>

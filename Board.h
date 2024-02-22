@@ -3,6 +3,8 @@
 #include <QMessageBox>
 #include <QGridLayout>
 #include <QPushButton>
+#include <QMediaPlayer>
+#include <QAudioOutput>
 #include "Piece.h"
 
 class Board : public QObject

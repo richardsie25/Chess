@@ -7,7 +7,7 @@
 #include "ui_Game.h"
 
 const int boardSize = 8;
-const int squareSize = 100;
+const int squareSize = 70;
 
 class Game : public QGraphicsView
 {
