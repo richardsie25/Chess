@@ -6,9 +6,9 @@ Pawn::Pawn(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePat
 
 QString Pawn::imagePath(QString color) {
     if (color == "white")
-        return "whitePawn.png";
+        return ":/Game/whitePawn.png";
     else
-        return "blackPawn.png";
+        return ":/Game/blackPawn.png";
 }
 
 bool Pawn::isValidMove(int destCol, int destRow) {

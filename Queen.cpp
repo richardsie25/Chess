@@ -5,9 +5,9 @@ Queen::Queen(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imageP
 
 QString Queen::imagePath(QString color){
     if (color == "white")
-        return "whiteQueen.png";
+        return ":/Game/whiteQueen.png";
     else
-        return "blackQueen.png";
+        return ":/Game/blackQueen.png";
 }
 
 bool Queen::isValidMove(int destCol, int destRow) {

@@ -438,7 +438,7 @@ void Board::addPiecePromotion(int destCol, int destRow, Piece* piece, QString ty
 }
 
 void Board::processEvents() {
-    if (playerTurn == "black") {
+    /*if (playerTurn == "black") {
         if (isCheckmate("black")) {
             gameState = "White Wins!";
         }
@@ -453,7 +453,7 @@ void Board::processEvents() {
         if (isStalemate("white")) {
             gameState = "Draw!";
         }
-    }
+    }*/
 
     //Change Text
     scene->removeItem(turn);

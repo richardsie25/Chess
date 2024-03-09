@@ -5,9 +5,9 @@ Knight::Knight(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imag
 
 QString Knight::imagePath(QString color) {
     if (color == "white")
-        return "whiteKnight.png";
+        return ":/Game/whiteKnight.png";
     else
-        return "blackKnight.png";
+        return ":/Game/blackKnight.png";
 }
 
 bool Knight::isValidMove(int destCol, int destRow) {

@@ -7,9 +7,9 @@ King::King(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePat
 
 QString King::imagePath(QString color) {
     if (color == "white")
-        return "whiteKing.png";
+        return ":/Game/whiteKing.png";
     else
-        return "blackKing.png";
+        return ":/Game/blackKing.png";
 }
 
 bool King::isValidMove(int destCol, int destRow) {

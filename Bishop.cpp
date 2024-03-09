@@ -5,9 +5,9 @@ Bishop::Bishop(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imag
 
 QString Bishop::imagePath(QString color) {
     if (color == "white")
-        return "whiteBishop.png";
+        return ":/Game/whiteBishop.png";
     else
-        return "blackBishop.png";
+        return ":/Game/blackBishop.png";
 }
 
 bool Bishop::isValidMove(int destCol, int destRow) {

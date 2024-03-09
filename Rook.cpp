@@ -6,9 +6,9 @@ Rook::Rook(QString color, QGraphicsItem* parent) : Piece(color, QPixmap(imagePat
 
 QString Rook::imagePath(QString color) {
     if (color == "white")
-        return "whiteRook.png";
+        return ":/Game/whiteRook.png";
     else
-        return "blackRook.png";
+        return ":/Game/blackRook.png";
 }
 
 bool Rook::isValidMove(int destCol, int destRow) {
