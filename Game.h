@@ -3,7 +3,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QTcpSocket>
-#define PORT 8080
+#define PORT 8000
 #include "ui_Game.h"
 
 const int boardSize = 8;

@@ -19,7 +19,7 @@ Game::Game(QWidget *parent) : QGraphicsView(parent) {
     socket = new QTcpSocket(this);
     connect(socket, &QTcpSocket::readyRead, this, &Game::readData);
     connect(socket, &QTcpSocket::errorOccurred, this, &Game::handleSocketError);
-    socket->connectToHost("192.168.1.168", 8000);
+    socket->connectToHost("127.0.0.1", PORT);
 
 }
 
@@ -77,7 +77,7 @@ def start_server(host, port, file):
 
 start_server(HOST, PORT, 'fen.txt')
 
-C:\Qt\6.5.2\msvc2019_64\bin\windeployqt.exe C:\Users\richa\Documents\School\Irvine\ChessGUI\x64\Debug\ChessGUI.exe
+C:\Qt\6.6.0\msvc2019_64\bin\windeployqt.exe C:\Users\richa\Documents\Irvine\ENGR159A\ChessGUI\x64\Release\ChessGUI.exe
 
 rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR
 rnbqkbnr/p1pppppp/1p6/8/3P4/8/PPP1PPPP/RNBQKBNR

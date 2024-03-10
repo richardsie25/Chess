@@ -374,7 +374,7 @@ void Board::handlePromotions(int destCol, int destRow, Piece* piece) {
         QStringList pieceTypes = { "Queen", "Rook", "Bishop", "Knight" };
         for (const QString& type : pieceTypes) {
             QPushButton* button = new QPushButton();
-            QIcon pieceIcon(piece->getColor() + type + ".png");
+            QIcon pieceIcon(":/Game/" + piece->getColor() + type + ".png");
             button->setIcon(pieceIcon);
             button->setIconSize(QSize(squareSize * 0.8, squareSize * 0.8));
             layout.addWidget(button);
@@ -438,7 +438,7 @@ void Board::addPiecePromotion(int destCol, int destRow, Piece* piece, QString ty
 }
 
 void Board::processEvents() {
-    /*if (playerTurn == "black") {
+    if (playerTurn == "black") {
         if (isCheckmate("black")) {
             gameState = "White Wins!";
         }
@@ -453,7 +453,7 @@ void Board::processEvents() {
         if (isStalemate("white")) {
             gameState = "Draw!";
         }
-    }*/
+    }
 
     //Change Text
     scene->removeItem(turn);
@@ -542,7 +542,7 @@ void Board::displayDeadMaterial() {
 
                 // A piece was captured
                 Piece* capturedPiece = previousPieceMap[row][col];
-                QString imagePath = capturedPiece->getColor();
+                QString imagePath = ":/Game/" + capturedPiece->getColor();
                 int materialValue = 0;
                 captures = true;
                 if (dynamic_cast<Queen*>(capturedPiece) && !dynamic_cast<Queen*>(capturedPiece)->wasPawn) {
